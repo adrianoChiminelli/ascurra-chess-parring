@@ -1,4 +1,4 @@
-import { ArrowRight, Coffee, ChessKnight, ChessKing } from 'lucide-react';
+import { ArrowRight, Coffee, ChessKing } from 'lucide-react';
 import type { Match, Participant, Round } from '../types';
 
 interface RoundPanelProps {

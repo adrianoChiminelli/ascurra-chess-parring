@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { HomeScreen } from './components/HomeScreen';
 import { TournamentScreen } from './components/TournamentScreen';
-import { generateNextRound } from './lib/tournament';
+import { generateNextRound } from './lib/tournament.ts';
 import type { Participant, TournamentConfig, TournamentState } from './types';
 
 export default function App() {

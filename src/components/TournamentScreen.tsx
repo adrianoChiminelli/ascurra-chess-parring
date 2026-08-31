@@ -6,7 +6,7 @@ import {
   computeStandings,
   generateNextRound,
   isRoundComplete,
-} from '../lib/tournament';
+} from '../lib/tournament.ts';
 import { StandingsPanel } from './StandingsPanel';
 import { RoundPanel } from './RoundPanel';
 
