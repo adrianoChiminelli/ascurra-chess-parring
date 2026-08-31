@@ -57,9 +57,6 @@ test-results/
 # Storybook
 .out/
 
-# Typescript
-lib/
-
 # Optional: lockfiles (keep package-lock.json in repo)
 # package-lock.json
 # pnpm-lock.yaml
