@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import {
-  Crown,
   Minus,
   Plus,
   Trash2,
   UserPlus,
   Users,
   Play,
+  ChessKing,
 } from 'lucide-react';
 import type { Participant, TournamentConfig } from '../types';
+import './styles/HomeScreen.css';
 
 interface HomeScreenProps {
   onStart: (config: TournamentConfig, participants: Participant[]) => void;
@@ -89,11 +90,10 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
     <>
       <header className="app-header">
         <div className="app-logo">
-          <Crown size={18} />
+          <ChessKing size={30} />
         </div>
         <div className="app-title">
           Ascurra Chess
-          <small>Emparceiramento e placar</small>
         </div>
       </header>
 

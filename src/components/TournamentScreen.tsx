@@ -9,6 +9,7 @@ import {
 } from '../lib/tournament.ts';
 import { StandingsPanel } from './StandingsPanel';
 import { RoundPanel } from './RoundPanel';
+import './styles/TournamentScreen.css';
 
 interface TournamentScreenProps {
   state: TournamentState;

@@ -1,4 +1,4 @@
-import { ListOrdered } from 'lucide-react';
+import { Crown } from 'lucide-react';
 import type { StandingRow } from '../types';
 
 interface StandingsPanelProps {
@@ -7,6 +7,8 @@ interface StandingsPanelProps {
 }
 
 export function StandingsPanel({ standings, roundsPlayed }: StandingsPanelProps) {
+  const leaderParticipantId = standings[0]?.participant.id;
+
   return (
     <div>
       <div className="panel-heading">
@@ -33,29 +35,30 @@ export function StandingsPanel({ standings, roundsPlayed }: StandingsPanelProps)
             </tr>
           </thead>
           <tbody>
-            {standings.map((row, index) => (
-              <tr key={row.participant.id}>
-                <td className="standings-rank">
-                  {index === 0 && row.points > 0 ? (
-                    <ListOrdered size={14} />
-                  ) : (
-                    index + 1
-                  )}
-                </td>
-                <td>
-                  <div className="standings-name">{row.participant.name}</div>
-                  {row.participant.rating !== null && (
-                    <div className="standings-rating">
-                      {row.participant.rating}
+            {standings.map((row, index) => {
+              const isLeader = row.participant.id === leaderParticipantId;
+
+              return (
+                <tr key={row.participant.id}>
+                  <td className="standings-rank">{index + 1}</td>
+                  <td>
+                    <div className="standings-name">
+                      {row.participant.name}
+                      {isLeader && (
+                        <Crown size={13} className="standings-leader-icon" aria-label="Líder" />
+                      )}
                     </div>
-                  )}
-                </td>
-                <td className="standings-points">{row.points}</td>
-                <td className="standings-record">
-                  {row.wins}-{row.draws}-{row.losses}
-                </td>
-              </tr>
-            ))}
+                    {row.participant.rating !== null && (
+                      <div className="standings-rating">{row.participant.rating}</div>
+                    )}
+                  </td>
+                  <td className="standings-points">{row.points}</td>
+                  <td className="standings-record">
+                    {row.wins}-{row.draws}-{row.losses}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
