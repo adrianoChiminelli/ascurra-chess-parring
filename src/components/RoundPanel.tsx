@@ -25,6 +25,44 @@ export function RoundPanel({
   onGenerateNext,
 }: RoundPanelProps) {
   const isFinalRound = round.number >= totalRounds;
+  const isInvalidRound = round.isInvalid;
+
+  const roundFooter = () => {
+    if (isFinalRound) {
+      return (
+        <span className="round-footer-hint">
+          Esta é a última rodada do torneio.
+        </span>
+      );
+    }
+
+    if (isInvalidRound) {
+      return (
+        <span className="round-footer-hint">
+          Não há mais partidas válidas para este torneio. Consulte o placar para o resultado.
+        </span>
+      );
+    }
+
+    return (
+      <>
+        <button
+          type="button"
+          className="primary-btn"
+          disabled={!canGenerateNext}
+          onClick={onGenerateNext}
+        >
+          Gerar rodada {round.number + 1}
+          <ArrowRight size={16} />
+        </button>
+        {!canGenerateNext && (
+          <span className="round-footer-hint">
+            Marque o resultado de todas as partidas para liberar a próxima rodada.
+          </span>
+        )}
+      </>
+    );
+  }
 
   return (
     <div>
@@ -122,28 +160,7 @@ export function RoundPanel({
 
       {isCurrentRound && (
         <div className="round-footer">
-          {isFinalRound ? (
-            <span className="round-footer-hint">
-              Esta é a última rodada do torneio.
-            </span>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="primary-btn"
-                disabled={!canGenerateNext}
-                onClick={onGenerateNext}
-              >
-                Gerar rodada {round.number + 1}
-                <ArrowRight size={16} />
-              </button>
-              {!canGenerateNext && (
-                <span className="round-footer-hint">
-                  Marque o resultado de todas as partidas para liberar a próxima rodada.
-                </span>
-              )}
-            </>
-          )}
+          {roundFooter()}
         </div>
       )}
     </div>

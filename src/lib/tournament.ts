@@ -82,7 +82,12 @@ export function generateNextRound(
     player: b.player,
   }));
 
-  return { number: completedRounds.length + 1, matches, byes };
+  const noValidMatch = matches.length === 0 && byes.length === 1;
+  if(noValidMatch) {
+    return { number: completedRounds.length + 1, matches: [], byes: [], isInvalid: true };
+  }
+
+  return { number: completedRounds.length + 1, matches, byes, isInvalid: false };
 }
 
 /** Calcula a classificação atual somando pontos de todas as partidas e byes já registrados. */

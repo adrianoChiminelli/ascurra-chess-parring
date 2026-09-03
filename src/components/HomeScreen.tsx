@@ -5,11 +5,11 @@ import {
   Trash2,
   UserPlus,
   Users,
-  Play,
-  ChessKing,
+  Play
 } from 'lucide-react';
 import type { Participant, TournamentConfig } from '../types';
 import './styles/HomeScreen.css';
+import knightImage from '../assets/knight.png';
 
 interface HomeScreenProps {
   onStart: (config: TournamentConfig, participants: Participant[]) => void;
@@ -89,8 +89,8 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
   return (
     <>
       <header className="app-header">
-        <div className="app-logo">
-          <ChessKing size={30} />
+        <div>
+          <img src={knightImage} className="logo-image" />
         </div>
         <div className="app-title">
           Ascurra Chess

@@ -39,6 +39,11 @@ body,
   height: 100%;
 }
 
+.logo-image {
+  height: 50px;
+  border-radius: var(--radius-sm);
+}
+
 body {
   margin: 0;
   background: var(--color-bg);

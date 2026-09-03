@@ -23,6 +23,7 @@ export interface Round {
   number: number;
   matches: Match[];
   byes: RoundBye[];
+  isInvalid: boolean;
 }
 
 export interface TournamentConfig {

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Crown, ListOrdered, Plus, Swords } from 'lucide-react';
+import { ListOrdered, Plus, Swords } from 'lucide-react';
 import type { Match, TournamentState } from '../types';
 import {
   canGenerateNextRound,
@@ -10,6 +10,7 @@ import {
 import { StandingsPanel } from './StandingsPanel';
 import { RoundPanel } from './RoundPanel';
 import './styles/TournamentScreen.css';
+import knightImage from '../assets/knight.png';
 
 interface TournamentScreenProps {
   state: TournamentState;
@@ -65,8 +66,8 @@ export function TournamentScreen({
   return (
     <>
       <header className="app-header">
-        <div className="app-logo">
-          <Crown size={18} />
+        <div>
+          <img src={knightImage} className="logo-image" />
         </div>
         <div className="app-title">{state.config.name}</div>
         <div className="tournament-header">
