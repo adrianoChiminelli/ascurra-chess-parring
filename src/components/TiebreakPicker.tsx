@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, GripVertical, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { TIEBREAK_LABELS, type TiebreakKind } from '../types';
@@ -11,94 +11,91 @@ interface TiebreakPickerProps {
 }
 
 export function TiebreakPicker({ value, onChange }: TiebreakPickerProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [draggedKind, setDraggedKind] = useState<TiebreakKind | null>(null);
 
   const availableChoices = useMemo(
     () => ALL_TIEBREAKS.filter((kind) => !value.includes(kind)),
     [value],
   );
 
-  function move(kind: TiebreakKind, direction: -1 | 1) {
-    const index = value.indexOf(kind);
-    if (index === -1) return;
-
-    const nextIndex = index + direction;
-    if (nextIndex < 0 || nextIndex >= value.length) return;
+  function reorder(kind: TiebreakKind, targetIndex: number) {
+    const fromIndex = value.indexOf(kind);
+    if (fromIndex === -1 || fromIndex === targetIndex) return;
 
     const nextValue = [...value];
-    [nextValue[index], nextValue[nextIndex]] = [nextValue[nextIndex], nextValue[index]];
+    const [moved] = nextValue.splice(fromIndex, 1);
+    nextValue.splice(targetIndex, 0, moved);
     onChange(nextValue);
   }
 
-  return (
-    <div className="field-group">
-      <span className="field-label">Tie Breaks</span>
+  function handleDrop(targetKind: TiebreakKind) {
+    if (!draggedKind || draggedKind === targetKind) return;
+    const targetIndex = value.indexOf(targetKind);
+    if (targetIndex === -1) return;
+    reorder(draggedKind, targetIndex);
+    setDraggedKind(null);
+  }
 
-      <div className="tiebreak-picker">
-        <div className="tiebreak-chips">
+  function summaryLabel() {
+    if (value.length === 0) return 'Nenhum critério';
+    if (value.length <= 3) return value.map((kind) => TIEBREAK_LABELS[kind].short).join(', ');
+    return `${value.slice(0, 3).map((kind) => TIEBREAK_LABELS[kind].short).join(', ')} +${value.length - 3}`;
+  }
+
+  return (
+    <div className="tiebreak-picker-shell">
+      <button
+        type="button"
+        className="tiebreak-picker-header"
+        onClick={() => setIsExpanded((open) => !open)}
+        aria-expanded={isExpanded}
+      >
+        <span className="tiebreak-picker-title">Critérios de desempate</span>
+        <span className="tiebreak-picker-summary">{summaryLabel()}</span>
+        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+      </button>
+
+      {isExpanded && (
+        <div className="tiebreak-picker-body">
           {value.length === 0 ? (
-            <span className="tiebreak-empty">Nenhum critério selecionado</span>
+            <p className="tiebreak-empty">Nenhum critério selecionado.</p>
           ) : (
-            value.map((kind, index) => (
-              <div key={kind} className="tiebreak-chip">
-                <span className="tiebreak-chip-text" title={TIEBREAK_LABELS[kind].long}>
-                  {TIEBREAK_LABELS[kind].long}
-                </span>
-                <div className="tiebreak-actions">
-                  <button
-                    type="button"
-                    className="tiebreak-move"
-                    aria-label={`Mover ${TIEBREAK_LABELS[kind].long} para cima`}
-                    onClick={() => move(kind, -1)}
-                    disabled={index === 0}
-                  >
-                    <ChevronUp size={12} />
-                  </button>
-                  <button
-                    type="button"
-                    className="tiebreak-move"
-                    aria-label={`Mover ${TIEBREAK_LABELS[kind].long} para baixo`}
-                    onClick={() => move(kind, 1)}
-                    disabled={index === value.length - 1}
-                  >
-                    <ChevronDown size={12} />
-                  </button>
+            <div className="tiebreak-list">
+              {value.map((kind, index) => (
+                <div
+                  key={kind}
+                  className="tiebreak-item"
+                  draggable
+                  onDragStart={() => setDraggedKind(kind)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => handleDrop(kind)}
+                >
+                  <GripVertical size={14} className="tiebreak-grip" />
+                  <span className="tiebreak-rank">{index + 1}</span>
+                  <span className="tiebreak-name">{TIEBREAK_LABELS[kind].long}</span>
                   <button
                     type="button"
                     className="tiebreak-remove"
                     aria-label={`Remover ${TIEBREAK_LABELS[kind].long}`}
                     onClick={() => onChange(value.filter((item) => item !== kind))}
                   >
-                    <X size={12} />
+                    <X size={13} />
                   </button>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
-        </div>
 
-        <div className="tiebreak-dropdown-wrap">
-          <button
-            type="button"
-            className="tiebreak-dropdown-button"
-            onClick={() => setIsOpen((open) => !open)}
-            aria-expanded={isOpen}
-            aria-label="Adicionar critério de desempate"
-            disabled={availableChoices.length === 0}
-          >
-            {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
-
-          {isOpen && availableChoices.length > 0 && (
-            <div className="tiebreak-menu" role="menu">
+          {availableChoices.length > 0 && (
+            <div className="tiebreak-add-menu">
               {availableChoices.map((kind) => (
                 <button
                   key={kind}
                   type="button"
-                  className="tiebreak-menu-item"
+                  className="tiebreak-add-item"
                   onClick={() => {
                     onChange([...value, kind]);
-                    setIsOpen(false);
                   }}
                 >
                   {TIEBREAK_LABELS[kind].long}
@@ -106,8 +103,14 @@ export function TiebreakPicker({ value, onChange }: TiebreakPickerProps) {
               ))}
             </div>
           )}
+
+          {availableChoices.length === 0 && (
+            <button type="button" className="tiebreak-add-cta" disabled>
+              Nenhum critério disponível
+            </button>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

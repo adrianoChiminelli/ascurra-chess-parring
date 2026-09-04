@@ -126,123 +126,144 @@
   margin-top: 0.35rem;
 }
 
-.tiebreak-picker {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
+.tiebreak-picker-shell {
   border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   background: var(--color-surface);
-  border-radius: var(--radius-sm);
-  padding: 0.5rem 0.65rem;
+  margin-bottom: 1rem;
+  overflow: hidden;
 }
 
-.tiebreak-chips {
+.tiebreak-picker-header {
+  width: 100%;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  flex: 1;
-  min-height: 34px;
   align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--color-ink);
+  padding: 0.75rem 0.8rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.tiebreak-picker-title {
+  flex: 1;
+}
+
+.tiebreak-picker-summary {
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tiebreak-picker-body {
+  border-top: 1px solid var(--color-border);
+  padding: 0.75rem 0.8rem 0.8rem;
+}
+
+.tiebreak-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tiebreak-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.55rem;
+  cursor: grab;
+}
+
+.tiebreak-item:active {
+  cursor: grabbing;
+}
+
+.tiebreak-grip {
+  color: var(--color-muted);
+}
+
+.tiebreak-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: var(--color-board);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.tiebreak-name {
+  flex: 1;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.tiebreak-remove {
+  border: none;
+  background: transparent;
+  color: var(--color-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.tiebreak-remove:hover {
+  background: rgba(28, 35, 33, 0.06);
 }
 
 .tiebreak-empty {
+  margin: 0;
   color: var(--color-muted);
   font-size: 0.8rem;
 }
 
-.tiebreak-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.5rem 0.35rem 0.7rem;
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background: var(--color-accent-soft);
-  color: var(--color-board);
-  font-size: 0.74rem;
-  font-weight: 600;
-}
-
-.tiebreak-chip-text {
-  white-space: nowrap;
-}
-
-.tiebreak-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-}
-
-.tiebreak-move,
-.tiebreak-remove,
-.tiebreak-dropdown-button {
-  border: none;
-  background: transparent;
-  color: inherit;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 0.15rem;
-  border-radius: 50%;
-}
-
-.tiebreak-move:hover:not(:disabled),
-.tiebreak-remove:hover,
-.tiebreak-dropdown-button:hover:not(:disabled) {
-  background: rgba(47, 59, 50, 0.08);
-}
-
-.tiebreak-move:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-.tiebreak-dropdown-wrap {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.tiebreak-dropdown-button {
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-board);
-}
-
-.tiebreak-dropdown-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.tiebreak-menu {
-  position: absolute;
-  top: calc(100% + 0.3rem);
-  right: 0;
-  min-width: 190px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 8px 20px rgba(28, 35, 33, 0.08);
-  z-index: 2;
+.tiebreak-add-menu {
   display: flex;
   flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
 }
 
-.tiebreak-menu-item {
-  border: none;
-  background: transparent;
+.tiebreak-add-item,
+.tiebreak-add-cta {
+  width: 100%;
   text-align: left;
+  border: 1px dashed var(--color-border);
+  background: var(--color-surface);
   color: var(--color-ink);
-  padding: 0.6rem 0.7rem;
-  font-size: 0.82rem;
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.55rem;
+  font-size: 0.78rem;
   cursor: pointer;
 }
 
-.tiebreak-menu-item:hover {
-  background: var(--color-accent-soft);
+.tiebreak-add-item:hover {
+  border-color: var(--color-board);
+}
+
+.tiebreak-add-cta {
+  margin-top: 0.75rem;
+  cursor: default;
+  color: var(--color-muted);
 }
 
 .text-input,

@@ -14,12 +14,35 @@ export type TiebreakKind =
   | 'directEncounter'
   | 'numberOfWins';
 
-export const TIEBREAK_LABELS: Record<TiebreakKind, { short: string; long: string }> = {
-  buchholzCut1: { short: 'BH-C1', long: 'Buchholz Cut 1' },
-  buchholz: { short: 'BH', long: 'Buchholz Total' },
-  sonnebornBerger: { short: 'SB', long: 'Sonneborn-Berger' },
-  directEncounter: { short: 'CD', long: 'Confronto direto' },
-  numberOfWins: { short: 'V', long: 'Número de vitórias' },
+export const TIEBREAK_LABELS: Record<
+  TiebreakKind,
+  { short: string; long: string; description: string }
+> = {
+  buchholzCut1: {
+    short: 'BH-C1',
+    long: 'Buchholz Cut 1',
+    description: 'Soma os pontos dos adversários, descartando o de menor pontuação.',
+  },
+  buchholz: {
+    short: 'BH',
+    long: 'Buchholz Total',
+    description: 'Soma os pontos de todos os adversários enfrentados.',
+  },
+  sonnebornBerger: {
+    short: 'SB',
+    long: 'Sonneborn-Berger',
+    description: 'Pontos dos adversários vencidos, mais metade dos empatados.',
+  },
+  directEncounter: {
+    short: 'CD',
+    long: 'Confronto direto',
+    description: 'Resultado das partidas entre os próprios jogadores empatados.',
+  },
+  numberOfWins: {
+    short: 'V',
+    long: 'Número de vitórias',
+    description: 'Quantidade total de partidas vencidas pelo participante.',
+  },
 };
 
 export const DEFAULT_TIEBREAK_ORDER: TiebreakKind[] = [

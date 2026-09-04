@@ -146,8 +146,6 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
               </div>
             </div>
 
-            <TiebreakPicker value={tiebreakOrder} onChange={setTiebreakOrder} />
-
             <div className="field-group">
               <span className="field-label">Adicionar participantes</span>
 
@@ -227,6 +225,7 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
                 </div>
               )}
             </div>
+            <TiebreakPicker value={tiebreakOrder} onChange={setTiebreakOrder} />
           </div>
 
           <aside className="home-sidebar">

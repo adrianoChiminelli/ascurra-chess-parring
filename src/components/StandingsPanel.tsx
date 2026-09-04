@@ -1,4 +1,4 @@
-import { Crown } from 'lucide-react';
+import { Crown, HelpCircle } from 'lucide-react';
 import { TIEBREAK_LABELS, type StandingRow, type TiebreakKind } from '../types';
 
 interface StandingsPanelProps {
@@ -35,8 +35,14 @@ export function StandingsPanel({ standings, roundsPlayed, tiebreakOrder }: Stand
                 <th>Pts</th>
                 <th>V-E-D</th>
                 {tiebreakOrder.map((kind) => (
-                  <th key={kind} title={TIEBREAK_LABELS[kind].long}>
-                    {TIEBREAK_LABELS[kind].short}
+                  <th key={kind}>
+                    <span className="th-with-hint">
+                      {TIEBREAK_LABELS[kind].short}
+                      <span className="hint-icon" tabIndex={0} aria-label={TIEBREAK_LABELS[kind].description}>
+                        <HelpCircle size={13} />
+                        <span className="hint-tooltip">{TIEBREAK_LABELS[kind].description}</span>
+                      </span>
+                    </span>
                   </th>
                 ))}
               </tr>
