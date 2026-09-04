@@ -126,6 +126,125 @@
   margin-top: 0.35rem;
 }
 
+.tiebreak-picker {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.65rem;
+}
+
+.tiebreak-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  flex: 1;
+  min-height: 34px;
+  align-items: center;
+}
+
+.tiebreak-empty {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.tiebreak-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-accent-soft);
+  color: var(--color-board);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.tiebreak-chip-text {
+  white-space: nowrap;
+}
+
+.tiebreak-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.tiebreak-move,
+.tiebreak-remove,
+.tiebreak-dropdown-button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0.15rem;
+  border-radius: 50%;
+}
+
+.tiebreak-move:hover:not(:disabled),
+.tiebreak-remove:hover,
+.tiebreak-dropdown-button:hover:not(:disabled) {
+  background: rgba(47, 59, 50, 0.08);
+}
+
+.tiebreak-move:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.tiebreak-dropdown-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tiebreak-dropdown-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-board);
+}
+
+.tiebreak-dropdown-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tiebreak-menu {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  right: 0;
+  min-width: 190px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 20px rgba(28, 35, 33, 0.08);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+}
+
+.tiebreak-menu-item {
+  border: none;
+  background: transparent;
+  text-align: left;
+  color: var(--color-ink);
+  padding: 0.6rem 0.7rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.tiebreak-menu-item:hover {
+  background: var(--color-accent-soft);
+}
+
 .text-input,
 .number-input,
 .textarea-input {

@@ -126,7 +126,11 @@ export function TournamentScreen({
 
         <div className="tab-content">
           {activeTab === 'standings' ? (
-            <StandingsPanel standings={standings} roundsPlayed={roundsPlayed} />
+            <StandingsPanel
+              standings={standings}
+              roundsPlayed={roundsPlayed}
+              tiebreakOrder={state.config.tiebreakOrder}
+            />
           ) : (
             (() => {
               const roundNumber = Number(activeTab.replace('round-', ''));

@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { HomeScreen } from './components/HomeScreen';
 import { TournamentScreen } from './components/TournamentScreen';
 import { generateNextRound } from './lib/tournament.ts';
-import type { Participant, TournamentConfig, TournamentState } from './types';
+import { type Participant, type TournamentConfig, type TournamentState } from './types';
 
 export default function App() {
   const [tournament, setTournament] = useState<TournamentState | null>(null);
 
   function handleStart(config: TournamentConfig, participants: Participant[]) {
     const firstRound = generateNextRound(participants, []);
-    setTournament({ config, participants, rounds: [firstRound] });
+    setTournament({ config: { ...config, tiebreakOrder: config.tiebreakOrder }, participants, rounds: [firstRound] });
   }
 
   return (

@@ -1,56 +1,79 @@
 # Torneio Suíço
 
-Aplicação React + TypeScript para organizar torneios de xadrez no sistema suíço,
-usando a lib [`@echecs/swiss`](https://github.com/echecsjs/swiss) (regras FIDE)
-para gerar os emparceiramentos. Roda inteiramente no navegador — sem backend.
+Aplicação web para organizar torneios de xadrez no sistema suíço, com geração de
+emparceiramentos e cálculo de critérios de desempate em cascata.
 
-## Rodando localmente
+Este projeto é software livre e de código aberto, desenvolvido sem fins lucrativos,
+com foco em uso local e em estudo/prática de torneios suíços.
+
+## Visão geral
+
+- Pareamento suíço usando `@echecs/swiss`.
+- Cálculo de desempate por: Buchholz Cut 1, Buchholz Total, Sonneborn-Berger,
+  Confronto direto e Número de vitórias.
+- Interface local em React + TypeScript.
+- Sem backend: tudo roda no navegador e o torneio fica em memória durante a sessão.
+
+## Requisitos para rodar localmente
+
+- Node.js 20 LTS ou superior
+- npm 10 ou superior
+- Sistema operacional: Linux, macOS ou Windows com terminal compatível
+
+## Comandos locais
+
+Instale as dependências:
 
 ```bash
 npm install
+```
+
+Inicie o ambiente de desenvolvimento:
+
+```bash
 npm run dev
 ```
 
-Abra o endereço que o terminal mostrar (geralmente `http://localhost:5173`).
-
-## Build de produção
+Gere a build de produção:
 
 ```bash
 npm run build
 ```
 
-Gera a pasta `dist/` com os arquivos estáticos prontos para publicar.
+Verifique o código com lint:
 
-## Publicando no GitHub Pages
+```bash
+npm run lint
+```
 
-1. Crie um repositório no GitHub e suba este projeto.
-2. Rode `npm run build` para gerar a pasta `dist/`.
-3. Publique a pasta `dist/` na branch `gh-pages`, de uma destas formas:
+A aplicação normalmente ficará disponível em:
 
-   **Opção A — pacote `gh-pages` (mais simples):**
-   ```bash
-   npm install -D gh-pages
-   npx gh-pages -d dist
-   ```
-   Depois ative o GitHub Pages nas configurações do repositório, apontando
-   para a branch `gh-pages`.
-
-   **Opção B — GitHub Actions:** use a action oficial
-   [`actions/deploy-pages`](https://github.com/actions/deploy-pages) para
-   publicar `dist/` automaticamente a cada push na branch principal.
-
-O `vite.config.ts` já usa `base: './'` (caminho relativo), então o build
-funciona tanto publicado na raiz do domínio quanto em uma subpasta como
-`usuario.github.io/nome-do-repo/`.
+```text
+http://localhost:5173
+```
 
 ## Como funciona
 
-- Tudo roda no estado do React — não há persistência entre sessões. Se
-  recarregar a página, o torneio em andamento é perdido.
-- Participantes sem rating podem ser adicionados normalmente; eles entram na
-  primeira rodada como jogadores não classificados.
-- Byes (folgas, quando o número de participantes é ímpar) são atribuídos
-  automaticamente pela lib e já entram com ponto cheio no placar.
-- O sistema de pareamento usado é o **Dutch** (padrão da lib, regra FIDE
-  C.04.3). Para trocar de sistema, ajuste o import em `src/lib/tournament.ts`
-  (ex.: `@echecs/swiss/dubov`, `@echecs/swiss/burstein`).
+- Participantes podem ser cadastrados individualmente ou em lote.
+- A primeira rodada é gerada automaticamente com o sistema suíço.
+- Byes são atribuídos automaticamente quando o número de participantes é ímpar.
+- A classificação considera pontos e desempates em cascata.
+- O usuário pode configurar a ordem dos critérios de desempate na tela inicial.
+
+
+## Créditos
+
+Este projeto utiliza bibliotecas do projeto Echecs, uma coleção de bibliotecas TypeScript para desenvolvimento de aplicações de xadrez.
+
+Em especial, o sistema utiliza:
+
+@echecs/swiss — algoritmos de emparceiramento de torneios suíços seguindo as regras da FIDE.
+Outras bibliotecas do ecossistema @echecs, conforme utilizadas pelo projeto.
+
+As bibliotecas Echecs são distribuídas sob a licença MIT.
+
+Projeto Echecs:
+https://github.com/echecsjs
+
+Licença:
+MIT License

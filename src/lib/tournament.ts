@@ -7,7 +7,15 @@ import type {
   Round,
   StandingRow,
   TournamentState,
+  TiebreakKind,
 } from '../types';
+import { DEFAULT_TIEBREAK_ORDER } from '../types';
+import {
+  computeDirectEncounter,
+  computeFlatTiebreak,
+  toCompletedRounds,
+  toPlayersForTiebreak,
+} from './tiebreaks';
 
 /**
  * Converte os participantes para o formato que a lib de pareamento espera,
@@ -29,27 +37,64 @@ function toPairingPlayers(participants: Participant[]): Player[] {
   }));
 }
 
-function toGameResult(result: MatchResult): 'white' | 'black' | 'draw' {
-  if (result === 1) return 'white';
-  if (result === 0) return 'black';
-  return 'draw';
+function compareNames(a: StandingRow, b: StandingRow): number {
+  return a.participant.name.localeCompare(b.participant.name, 'pt-BR');
+}
+
+function isEquivalentUnderPreviousCriteria(
+  a: StandingRow,
+  b: StandingRow,
+  previousKinds: TiebreakKind[],
+): boolean {
+  if (a.points !== b.points) return false;
+
+  for (const kind of previousKinds) {
+    const valueA = kind === 'directEncounter'
+      ? a.tiebreaks.directEncounter ?? null
+      : a.tiebreaks[kind] ?? null;
+    const valueB = kind === 'directEncounter'
+      ? b.tiebreaks.directEncounter ?? null
+      : b.tiebreaks[kind] ?? null;
+
+    if (valueA === null || valueB === null) continue;
+    if (valueA !== valueB) return false;
+  }
+
+  return true;
+}
+
+function badDirectEncounterGroup(
+  group: StandingRow[],
+  completedRounds: CompletedRound[],
+): boolean {
+  const ids = group.map((row) => row.participant.id);
+
+  for (let i = 0; i < ids.length; i += 1) {
+    for (let j = i + 1; j < ids.length; j += 1) {
+      const firstId = ids[i];
+      const secondId = ids[j];
+      const count = completedRounds.reduce((total, round) => {
+        const pairGames = round.games.filter((game) => {
+          const isSamePair =
+            (game.white === firstId && game.black === secondId) ||
+            (game.white === secondId && game.black === firstId);
+          if (!isSamePair) return false;
+          if ('forfeit' in game && game.forfeit !== undefined) return false;
+          return true;
+        });
+        return total + pairGames.length;
+      }, 0);
+
+      if (count !== 1) return true;
+    }
+  }
+
+  return false;
 }
 
 /** Considera uma rodada concluída quando todas as suas partidas têm resultado. */
 export function isRoundComplete(round: Round): boolean {
   return round.matches.every((m) => m.result !== null);
-}
-
-/** Converte as rodadas já concluídas para o formato exigido pela lib. */
-function toCompletedRounds(rounds: Round[]): CompletedRound[] {
-  return rounds.filter(isRoundComplete).map((round) => ({
-    byes: round.byes.map((b) => ({ kind: 'pairing' as const, player: b.player })),
-    games: round.matches.map((m) => ({
-      white: m.white,
-      black: m.black,
-      result: toGameResult(m.result as MatchResult),
-    })),
-  }));
 }
 
 let counter = 0;
@@ -83,7 +128,7 @@ export function generateNextRound(
   }));
 
   const noValidMatch = matches.length === 0 && byes.length === 1;
-  if(noValidMatch) {
+  if (noValidMatch) {
     return { number: completedRounds.length + 1, matches: [], byes: [], isInvalid: true };
   }
 
@@ -101,6 +146,7 @@ export function computeStandings(state: TournamentState): StandingRow[] {
       wins: 0,
       draws: 0,
       losses: 0,
+      tiebreaks: {},
     });
   }
 
@@ -134,11 +180,116 @@ export function computeStandings(state: TournamentState): StandingRow[] {
     }
   }
 
-  return [...rows.values()].sort((a, b) => {
+  const order = state.config.tiebreakOrder ?? DEFAULT_TIEBREAK_ORDER;
+  const completedRounds = toCompletedRounds(state.rounds);
+  const pointsById = new Map<string, number>();
+  for (const row of rows.values()) {
+    pointsById.set(row.participant.id, row.points);
+  }
+
+  const allPlayers = toPlayersForTiebreak(state.participants, pointsById);
+  for (const row of rows.values()) {
+    for (const kind of order) {
+      if (kind === 'directEncounter') continue;
+      row.tiebreaks[kind] = computeFlatTiebreak(kind, row.participant.id, completedRounds, allPlayers);
+    }
+  }
+
+  let sortedRows = [...rows.values()].sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
-    if (b.wins !== a.wins) return b.wins - a.wins;
-    return a.participant.name.localeCompare(b.participant.name, 'pt-BR');
+
+    for (const kind of order) {
+      if (kind === 'directEncounter') continue;
+      const valueA = a.tiebreaks[kind] ?? 0;
+      const valueB = b.tiebreaks[kind] ?? 0;
+      if (valueB !== valueA) return valueB - valueA;
+    }
+
+    return compareNames(a, b);
   });
+
+  for (let i = 0; i < order.length; i += 1) {
+    const kind = order[i];
+    const previousKinds = order.slice(0, i);
+    const groups: StandingRow[][] = [];
+    let cursor = 0;
+
+    while (cursor < sortedRows.length) {
+      let nextCursor = cursor + 1;
+      while (nextCursor < sortedRows.length && isEquivalentUnderPreviousCriteria(sortedRows[cursor], sortedRows[nextCursor], previousKinds)) {
+        nextCursor += 1;
+      }
+      groups.push(sortedRows.slice(cursor, nextCursor));
+      cursor = nextCursor;
+    }
+
+    const nextSortedRows: StandingRow[] = [];
+    for (const group of groups) {
+      if (group.length <= 1) {
+        nextSortedRows.push(...group);
+        continue;
+      }
+
+      if (kind === 'directEncounter') {
+        if (badDirectEncounterGroup(group, completedRounds)) {
+          nextSortedRows.push(...group);
+          continue;
+        }
+
+        const tiedGroupPlayers = toPlayersForTiebreak(
+          group.map((row) => row.participant),
+          new Map(group.map((row) => [row.participant.id, row.points])),
+        );
+
+        for (const row of group) {
+          row.tiebreaks.directEncounter = computeDirectEncounter(
+            row.participant.id,
+            completedRounds,
+            tiedGroupPlayers,
+          );
+        }
+
+        group.sort((a, b) => {
+          const valueA = a.tiebreaks.directEncounter ?? 0;
+          const valueB = b.tiebreaks.directEncounter ?? 0;
+          if (valueB !== valueA) return valueB - valueA;
+          return compareNames(a, b);
+        });
+
+        nextSortedRows.push(...group);
+        continue;
+      }
+
+      group.sort((a, b) => {
+        const valueA = a.tiebreaks[kind] ?? 0;
+        const valueB = b.tiebreaks[kind] ?? 0;
+        if (valueB !== valueA) return valueB - valueA;
+        return compareNames(a, b);
+      });
+
+      nextSortedRows.push(...group);
+    }
+
+    sortedRows = nextSortedRows;
+  }
+
+  let finalCursor = 0;
+  while (finalCursor < sortedRows.length) {
+    let nextCursor = finalCursor + 1;
+    while (nextCursor < sortedRows.length && isEquivalentUnderPreviousCriteria(sortedRows[finalCursor], sortedRows[nextCursor], order)) {
+      nextCursor += 1;
+    }
+
+    const group = sortedRows.slice(finalCursor, nextCursor);
+    if (group.length > 1) {
+      group.sort((a, b) => compareNames(a, b));
+      sortedRows.splice(finalCursor, group.length, ...group);
+    }
+
+    finalCursor = nextCursor;
+  }
+
+  return sortedRows;
 }
 
 export function canGenerateNextRound(state: TournamentState): boolean {

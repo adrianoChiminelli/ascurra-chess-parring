@@ -117,10 +117,15 @@
   margin: 0.25rem 0 0;
 }
 
+.standings-table-wrap {
+  overflow-x: auto;
+}
+
 .standings-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
+  min-width: 760px;
 }
 
 .standings-table th {
@@ -172,6 +177,12 @@
   font-variant-numeric: tabular-nums;
   color: var(--color-muted);
   font-size: 0.85rem;
+}
+
+.standings-tiebreak {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-soft);
+  text-align: left;
 }
 
 .match-list {

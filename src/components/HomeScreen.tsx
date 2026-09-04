@@ -7,7 +7,8 @@ import {
   Users,
   Play
 } from 'lucide-react';
-import type { Participant, TournamentConfig } from '../types';
+import { DEFAULT_TIEBREAK_ORDER, type Participant, type TiebreakKind, type TournamentConfig } from '../types';
+import { TiebreakPicker } from './TiebreakPicker';
 import './styles/HomeScreen.css';
 import knightImage from '../assets/knight.png';
 
@@ -28,15 +29,17 @@ function parseBatchLine(line: string): { name: string; rating: number | null } |
   if (!trimmed) return null;
   // Aceita "Nome, 1800" ou "Nome; 1800" ou apenas "Nome"
   const match = trimmed.match(/^(.*?)[,;]\s*(\d{2,4})\s*$/);
+  const subStringFunction = (str: string) => str.trim().substring(0, 20);
   if (match) {
-    return { name: match[1].trim(), rating: Number(match[2]) };
+    return { name: subStringFunction(match[1]), rating: Number(match[2].substring(0, 4)) };
   }
-  return { name: trimmed, rating: null };
+  return { name: subStringFunction(trimmed), rating: null };
 }
 
 export function HomeScreen({ onStart }: HomeScreenProps) {
   const [tournamentName, setTournamentName] = useState('');
   const [totalRounds, setTotalRounds] = useState(5);
+  const [tiebreakOrder, setTiebreakOrder] = useState<TiebreakKind[]>(DEFAULT_TIEBREAK_ORDER);
   const [entryMode, setEntryMode] = useState<EntryMode>('individual');
   const [participants, setParticipants] = useState<Participant[]>([]);
 
@@ -81,6 +84,7 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
       {
         name: tournamentName.trim() || 'Torneio suíço',
         totalRounds,
+        tiebreakOrder,
       },
       participants,
     );
@@ -115,6 +119,7 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
                   className="text-input"
                   placeholder="Ex.: Aberto de Verão do Clube"
                   value={tournamentName}
+                  maxLength={50}
                   onChange={(e) => setTournamentName(e.target.value)}
                 />
               </div>
@@ -140,6 +145,8 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
                 </div>
               </div>
             </div>
+
+            <TiebreakPicker value={tiebreakOrder} onChange={setTiebreakOrder} />
 
             <div className="field-group">
               <span className="field-label">Adicionar participantes</span>
@@ -168,6 +175,7 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
                   <input
                     className="text-input"
                     placeholder="Nome do participante"
+                    maxLength={20}
                     value={singleName}
                     onChange={(e) => setSingleName(e.target.value)}
                     onKeyDown={(e) => {
@@ -178,6 +186,7 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
                     className="number-input"
                     placeholder="Rating (opcional)"
                     inputMode="numeric"
+                    maxLength={4}
                     value={singleRating}
                     onChange={(e) =>
                       setSingleRating(e.target.value.replace(/\D/g, ''))
