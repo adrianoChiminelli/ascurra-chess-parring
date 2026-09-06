@@ -1,7 +1,8 @@
 # Torneio Suíço
 
-Aplicação web para organizar torneios de xadrez no sistema suíço, com geração de
-emparceiramentos e cálculo de critérios de desempate em cascata.
+Aplicação web para organizar torneios de xadrez no sistema suíço. Esse aplicativo é uma interface
+gráfica para criação e gerenciamento de torneios e usa o motor de cálculo de emparceiramento e desempate
+desenvolvidos pelo projeto echecsjs: https://github.com/echecsjs
 
 Este projeto é software livre e de código aberto, desenvolvido sem fins lucrativos,
 com foco em uso local e em estudo/prática de torneios suíços.
@@ -60,20 +61,16 @@ http://localhost:5173
 - A classificação considera pontos e desempates em cascata.
 - O usuário pode configurar a ordem dos critérios de desempate na tela inicial.
 
-
 ## Créditos
+Toda a lógica de xadrez (pareamento suíço e cálculo de critérios de desempate) é fornecida pelas bibliotecas de código aberto do projeto echecs.js, licenciadas sob MIT:
 
-Este projeto utiliza bibliotecas do projeto Echecs, uma coleção de bibliotecas TypeScript para desenvolvimento de aplicações de xadrez.
+@echecs/swiss — pareamento suíço (sistema Dutch, FIDE C.04.3)
+@echecs/buchholz — Buchholz e Buchholz Cut 1 (FIDE 8.1)
+@echecs/sonneborn-berger — Sonneborn-Berger (FIDE 9.1)
+@echecs/direct-encounter — Confronto direto (FIDE 6)
+@echecs/number-of-wins — Número de vitórias
 
-Em especial, o sistema utiliza:
+Este projeto não é afiliado ao autor dessas bibliotecas — apenas as consome como dependências via npm. Veja THIRD-PARTY-NOTICES.md para os textos completos de licença de cada uma.
 
-@echecs/swiss — algoritmos de emparceiramento de torneios suíços seguindo as regras da FIDE.
-Outras bibliotecas do ecossistema @echecs, conforme utilizadas pelo projeto.
-
-As bibliotecas Echecs são distribuídas sob a licença MIT.
-
-Projeto Echecs:
-https://github.com/echecsjs
-
-Licença:
+## Licença:
 MIT License
