@@ -1,10 +1,12 @@
-import { ArrowRight, Coffee, ChessKing } from 'lucide-react';
+import { ArrowRight, Coffee } from 'lucide-react';
+import { GiChessKing } from 'react-icons/gi';
 import type { Match, Participant, Round } from '../types';
 
 interface RoundPanelProps {
   round: Round;
   totalRounds: number;
   participantsById: Map<string, Participant>;
+  pointsById: Map<string, number>;
   onSetResult: (matchId: string, result: Match['result']) => void;
   isCurrentRound: boolean;
   canGenerateNext: boolean;
@@ -15,10 +17,15 @@ function nameOf(participantsById: Map<string, Participant>, id: string) {
   return participantsById.get(id)?.name ?? id;
 }
 
+function formatPoints(points: number) {
+  return Number.isInteger(points) ? String(points) : points.toFixed(1).replace(/\.0$/, '');
+}
+
 export function RoundPanel({
   round,
   totalRounds,
   participantsById,
+  pointsById,
   onSetResult,
   isCurrentRound,
   canGenerateNext,
@@ -97,6 +104,8 @@ export function RoundPanel({
           const whiteWon = match.result === 1;
           const blackWon = match.result === 0;
           const draw = match.result === 0.5;
+          const whitePoints = pointsById.get(match.white) ?? 0;
+          const blackPoints = pointsById.get(match.black) ?? 0;
 
           return (
             <div className="match-card" key={match.id}>
@@ -107,13 +116,17 @@ export function RoundPanel({
                     whiteWon ? 'decided-win' : blackWon ? 'decided-loss' : ''
                   }`}
                 >
-                  <ChessKing
-                    size={18}
-                    className="player-side-icon white"
-                    aria-hidden
-                    style={{ marginRight: 8 }}
-                  />
-                  {nameOf(participantsById, match.white)}
+                  <span className="match-player-main">
+                    <GiChessKing
+                      size={23}
+                      className="player-side-icon white"
+                      aria-hidden
+                    />
+                    <span>{nameOf(participantsById, match.white)}</span>
+                  </span>
+                  <span className="match-player-points">
+                    {formatPoints(whitePoints)}
+                  </span>
                 </span>
                 <span className="match-vs">vs</span>
                 <span
@@ -121,13 +134,17 @@ export function RoundPanel({
                     blackWon ? 'decided-win' : whiteWon ? 'decided-loss' : ''
                   }`}
                 >
-                  {nameOf(participantsById, match.black)}
-                  <ChessKing
-                    size={18}
-                    className="player-side-icon black"
-                    aria-hidden
-                    style={{ marginLeft: 8 }}
-                  />
+                  <span className="match-player-points">
+                    {formatPoints(blackPoints)}
+                  </span>
+                  <span className="match-player-main">
+                    <span>{nameOf(participantsById, match.black)}</span>
+                    <GiChessKing
+                      size={23}
+                      className="player-side-icon black"
+                      aria-hidden
+                    />
+                  </span>
                 </span>
               </div>
               <div className="result-btns">

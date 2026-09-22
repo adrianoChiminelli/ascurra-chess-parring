@@ -35,6 +35,10 @@ export function TournamentScreen({
   );
 
   const standings = useMemo(() => computeStandings(state), [state]);
+  const pointsById = useMemo(
+    () => new Map(standings.map((row) => [row.participant.id, row.points])),
+    [standings],
+  );
 
   function setMatchResult(
     roundNumber: number,
@@ -143,6 +147,7 @@ export function TournamentScreen({
                   round={round}
                   totalRounds={state.config.totalRounds}
                   participantsById={participantsById}
+                  pointsById={pointsById}
                   onSetResult={(matchId, result) =>
                     setMatchResult(roundNumber, matchId, result)
                   }
