@@ -246,10 +246,12 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
                 </p>
               ) : (
                 <ul className="participant-list">
-                  {participants.map((p) => (
+                  {participants.map((p, index) => (
                     <li key={p.id}>
                       <span>
-                        <span className="participant-name">{p.name}</span>{' '}
+                        <span className="participant-name">
+                          {index + 1}. {p.name}
+                        </span>{' '}
                         {p.rating !== null && (
                           <span className="participant-rating">
                             {p.rating}
