@@ -8,6 +8,7 @@ import {
   Play
 } from 'lucide-react';
 import { DEFAULT_TIEBREAK_ORDER, type Participant, type TiebreakKind, type TournamentConfig } from '../types';
+import { nextId } from '../lib/ids';
 import { TiebreakPicker } from './TiebreakPicker';
 import './styles/HomeScreen.css';
 import knightImage from '../assets/knight.png';
@@ -17,12 +18,6 @@ interface HomeScreenProps {
 }
 
 type EntryMode = 'individual' | 'batch';
-
-let idCounter = 0;
-function nextId(): string {
-  idCounter += 1;
-  return `p${Date.now().toString(36)}${idCounter}`;
-}
 
 function parseBatchLine(line: string): { name: string; rating: number | null } | null {
   const trimmed = line.trim();
@@ -52,7 +47,7 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
     const name = singleName.trim();
     if (!name) return;
     const rating = singleRating.trim() ? Number(singleRating) : null;
-    setParticipants((prev) => [...prev, { id: nextId(), name, rating }]);
+    setParticipants((prev) => [...prev, { id: nextId('p'), name, rating }]);
     setSingleName('');
     setSingleRating('');
   }
@@ -65,7 +60,7 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
     if (lines.length === 0) return;
     setParticipants((prev) => [
       ...prev,
-      ...lines.map((l) => ({ id: nextId(), name: l.name, rating: l.rating })),
+      ...lines.map((l) => ({ id: nextId('p'), name: l.name, rating: l.rating })),
     ]);
     setBatchText('');
   }

@@ -16,6 +16,7 @@ import {
   toCompletedRounds,
   toPlayersForTiebreak,
 } from './tiebreaks';
+import { nextId } from './ids';
 
 /**
  * Converte os participantes para o formato que a lib de pareamento espera,
@@ -95,12 +96,6 @@ function badDirectEncounterGroup(
 /** Considera uma rodada concluída quando todas as suas partidas têm resultado. */
 export function isRoundComplete(round: Round): boolean {
   return round.matches.every((m) => m.result !== null);
-}
-
-let counter = 0;
-function nextId(prefix: string): string {
-  counter += 1;
-  return `${prefix}${Date.now().toString(36)}${counter}`;
 }
 
 /**
