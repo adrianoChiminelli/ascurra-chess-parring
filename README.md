@@ -61,6 +61,23 @@ http://localhost:5173
 - A classificação considera pontos e desempates em cascata.
 - O usuário pode configurar a ordem dos critérios de desempate na tela inicial.
 
+## Versionamento e releases
+
+O projeto segue [Semantic Versioning](https://semver.org/lang/pt-BR/) e as mudanças ficam em
+[CHANGELOG.md](CHANGELOG.md). Release e deploy são manuais e independentes, via GitHub Actions.
+
+1. Durante o desenvolvimento, registre as mudanças na seção `[Unreleased]` do `CHANGELOG.md`
+   (junto com os commits normais).
+2. **Release**: *Actions → Release → Run workflow* (na `main`), escolhendo `patch`, `minor` ou `major`.
+   O workflow valida o changelog, roda lint e build, atualiza `package.json`/`package-lock.json`,
+   move `[Unreleased]` para a nova versão, cria o commit `chore(release): vX.Y.Z`, a tag `vX.Y.Z`
+   e a GitHub Release com as notas do changelog.
+3. **Deploy**: *Actions → Deploy to GitHub Pages → Run workflow*, informando a tag (ex.: `v1.2.0`).
+   Vazio publica a última release. Também serve para rollback para uma tag anterior.
+
+Também é possível gerar a versão localmente com `npm version patch|minor|major` seguido de
+`git push --follow-tags` (nesse caso a GitHub Release não é criada automaticamente).
+
 ## Créditos
 Toda a lógica de xadrez (pareamento suíço e cálculo de critérios de desempate) é fornecida pelas bibliotecas de código aberto do projeto echecs.js, licenciadas sob MIT:
 

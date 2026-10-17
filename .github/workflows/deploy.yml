@@ -1,25 +1,51 @@
-name: Build and Deploy to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
-  push:
-    branches:
-      - main
-
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag a publicar (ex.: v1.0.0). Vazio = última release'
+        required: false
+        type: string
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
 
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Resolve tag
+        id: tag
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          TAG="${INPUT_TAG:-$(git tag --list 'v*.*.*' --sort=-v:refname | head -n 1)}"
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag inválida: '$TAG' (esperado vX.Y.Z)"
+            exit 1
+          fi
+          if ! git rev-parse -q --verify "refs/tags/$TAG" > /dev/null; then
+            echo "::error::Tag $TAG não existe"
+            exit 1
+          fi
+          git checkout --detach "refs/tags/$TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -39,10 +65,14 @@ jobs:
           path: ./dist
 
   deploy:
-    name: Deploy
+    name: Deploy ${{ needs.build.outputs.tag }}
     runs-on: ubuntu-latest
 
     needs: build
+
+    permissions:
+      pages: write
+      id-token: write
 
     environment:
       name: github-pages

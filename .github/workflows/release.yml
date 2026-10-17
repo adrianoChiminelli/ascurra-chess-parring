@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Tipo de versão (SemVer)'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ensure workflow runs on main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Releases só podem ser geradas a partir da main. Ref atual: ${{ github.ref }}"
+          exit 1
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '26.7.0'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure git author
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      # Roda preversion (changelog --check, lint, build) e version (changelog), cria commit e tag.
+      - name: Bump version
+        id: bump
+        run: |
+          npm version ${{ inputs.bump }}
+          echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Push commit and tag
+        run: git push origin HEAD:main --follow-tags
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          node scripts/changelog.mjs --notes "$TAG" > release-notes.md
+          gh release create "$TAG" --title "$TAG" --notes-file release-notes.md --verify-tag
+          echo "### Release $TAG criada" >> "$GITHUB_STEP_SUMMARY"
+          echo "Para publicar: Actions → Deploy to GitHub Pages → tag \`$TAG\`" >> "$GITHUB_STEP_SUMMARY"

@@ -1,13 +1,15 @@
 {
   "name": "torneio-suico",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preversion": "node scripts/changelog.mjs --check && npm run lint && npm run build",
+    "version": "node scripts/changelog.mjs && git add CHANGELOG.md"
   },
   "dependencies": {
     "@echecs/buchholz": "^4.1.0",
