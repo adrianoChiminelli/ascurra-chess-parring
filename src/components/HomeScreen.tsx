@@ -89,9 +89,10 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
     <>
       <header className="app-header">
         <div>
-          <img src={knightImage} className="logo-image" />
+          <img src={knightImage} className="logo-image" alt="Clube de Xadrez Ascurra" />
         </div>
         <div className="app-title">
+          <small>Clube de Xadrez Ascurra</small>
           Ascurra Chess
         </div>
       </header>
@@ -99,6 +100,7 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
       <main className="home-main">
         <div className="home-layout">
           <div className="home-form">
+            <span className="home-kicker">Novo torneio · Sistema suíço</span>
             <h1 className="home-eyebrow">Configure seu torneio</h1>
             <p className="home-sub">
               Defina o nome, o número de rodadas e a lista de participantes.

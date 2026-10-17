@@ -1,32 +1,52 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --color-bg: #f2f0e8;
-  --color-surface: #fffdf8;
-  --color-ink: #1c2321;
-  --color-ink-soft: #4a5049;
-  --color-muted: #7a7566;
-  --color-border: #ddd5c4;
-  --color-board: #2f3b32;
-  --color-board-soft: #3d4b40;
-  --color-accent: #b8863b;
-  --color-accent-ink: #071224;
-  --color-accent-soft: #eadfc4;
-  --color-win: #3f7d5c;
-  --color-win-soft: #e1ede6;
-  --color-loss: #a6453c;
-  --color-loss-soft: #f3e3e1;
-  --color-draw: #8a7b5e;
-  --color-draw-soft: #ece6d8;
+  /* Superfícies: papel quente, como uma súmula de torneio */
+  --color-bg: #f4f2ec;
+  --color-surface: #ffffff;
+  --color-surface-alt: #faf8f3;
+  --color-border: #e5e0d4;
+  --color-border-strong: #d2cbbb;
 
+  /* Tinta */
+  --color-ink: #141922;
+  --color-ink-soft: #464d5a;
+  --color-muted: #858a96;
+
+  /* Tabuleiro: navy profundo do escudo do clube */
+  --color-board: #111a2e;
+  --color-board-soft: #1c2742;
+  --color-board-line: rgba(255, 255, 255, 0.08);
+  --color-board-text: #c7cfdf;
+
+  /* Destaque: azul do escudo */
+  --color-accent: #1f56b8;
+  --color-accent-strong: #17448f;
+  --color-accent-soft: #e8eefa;
+  --color-gold: #b48a3a;
+  --color-gold-soft: #f6eedb;
+
+  --color-win: #2d7a54;
+  --color-win-soft: #e4f1e9;
+  --color-loss: #b0443a;
+  --color-loss-soft: #f7e6e3;
+  --color-draw: #8a7046;
+  --color-draw-soft: #f2ecdf;
 
   --font-display: 'Fraunces', Georgia, serif;
-  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
 
-  --radius-sm: 3px;
-  --radius-md: 6px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
 
-  color-scheme: dark;
+  --shadow-sm: 0 1px 2px rgba(20, 25, 34, 0.05);
+  --shadow-md: 0 1px 2px rgba(20, 25, 34, 0.04), 0 6px 20px -8px rgba(20, 25, 34, 0.12);
+  --shadow-lg: 0 2px 4px rgba(20, 25, 34, 0.04), 0 18px 40px -16px rgba(20, 25, 34, 0.22);
+
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  color-scheme: light;
 }
 
 * {
@@ -39,32 +59,39 @@ body,
   height: 100%;
 }
 
-.logo-image {
-  height: 50px;
-  border-radius: var(--radius-sm);
-}
-
 body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-body);
+  font-size: 15px;
+  font-feature-settings: 'cv11', 'ss01';
   -webkit-font-smoothing: antialiased;
 }
 
-button {
-  font-family: inherit;
-}
-
+button,
 input,
 textarea,
 select {
   font-family: inherit;
 }
 
+button {
+  transition:
+    background-color 0.15s var(--ease),
+    border-color 0.15s var(--ease),
+    color 0.15s var(--ease),
+    box-shadow 0.15s var(--ease),
+    transform 0.15s var(--ease);
+}
+
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+::selection {
+  background: var(--color-accent-soft);
 }
 
 .app-shell {
@@ -73,64 +100,96 @@ select {
   flex-direction: column;
 }
 
+/* ---------- Cabeçalho ---------- */
+
 .app-header {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1.25rem 1.75rem;
+  gap: 0.9rem;
+  padding: 0.9rem 1.75rem;
+  background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
 }
 
-.app-logo {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm);
-  background: var(--color-board);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-ink);
-  flex-shrink: 0;
+/* Faixa quadriculada sutil, lembrando a borda de um tabuleiro */
+.app-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--color-board) 0 12px,
+    transparent 12px 24px
+  );
+  opacity: 0.85;
+}
+
+.logo-image {
+  display: block;
+  height: 46px;
+  width: auto;
+  filter: drop-shadow(0 2px 4px rgba(20, 25, 34, 0.12));
 }
 
 .app-title {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 1.05rem;
-  letter-spacing: 0.01em;
+  font-size: 1.2rem;
+  letter-spacing: -0.005em;
+  line-height: 1.15;
+  min-width: 0;
 }
 
 .app-title small {
   display: block;
   font-family: var(--font-body);
-  font-weight: 400;
-  font-size: 0.72rem;
+  font-weight: 600;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
   color: var(--color-muted);
-  margin-top: 0.1rem;
+  margin-bottom: 0.15rem;
 }
+
+/* ---------- Botões ---------- */
 
 .primary-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
   background: var(--color-board);
   color: #fff;
-  border: none;
+  border: 1px solid var(--color-board);
   border-radius: var(--radius-sm);
-  padding: 0.75rem 1.4rem;
-  font-size: 0.92rem;
+  padding: 0.75rem 1.35rem;
+  font-size: 0.9rem;
   font-weight: 600;
+  letter-spacing: 0.005em;
   cursor: pointer;
   margin-top: 0.5rem;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, var(--shadow-sm);
 }
 
 .primary-btn:hover:not(:disabled) {
-  background: var(--color-board-soft);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px -8px rgba(31, 86, 184, 0.55);
+}
+
+.primary-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .primary-btn:disabled {
-  background: var(--color-border);
+  background: var(--color-surface-alt);
+  border-color: var(--color-border);
   color: var(--color-muted);
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -140,20 +199,21 @@ select {
   gap: 0.45rem;
   background: var(--color-surface);
   color: var(--color-ink);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
-  padding: 0.55rem 0.9rem;
-  font-size: 0.85rem;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.84rem;
   font-weight: 500;
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
 }
 
 .secondary-btn:hover {
-  border-color: var(--color-board);
+  border-color: var(--color-ink);
 }
 
 .form-error {
   color: var(--color-loss);
   font-size: 0.82rem;
-  margin-top: 0.5rem;
+  margin: 0 0 0.75rem;
 }

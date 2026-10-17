@@ -52,8 +52,10 @@ export function StandingsPanel({ standings, roundsPlayed, tiebreakOrder }: Stand
                 const isLeader = row.participant.id === leaderParticipantId;
 
                 return (
-                  <tr key={row.participant.id}>
-                    <td className="standings-rank">{index + 1}</td>
+                  <tr key={row.participant.id} className={index < 3 && row.played > 0 ? `podium-${index + 1}` : undefined}>
+                    <td className="standings-rank">
+                      <span className="standings-rank-chip">{index + 1}</span>
+                    </td>
                     <td>
                       <div className="standings-name">
                         {row.participant.name}

@@ -1,11 +1,10 @@
 # Changelog
 
-Todas as mudanças relevantes deste projeto são documentadas aqui.
-
-O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
-e o projeto adota [Semantic Versioning](https://semver.org/lang/pt-BR/).
-
 ## [Unreleased]
+
+### Changed
+
+- Testando novo visual da interface.
 
 ## [1.0.0] - 2026-10-16
 

@@ -87,7 +87,9 @@ export function RoundPanel({
       <div className="match-list">
         {round.byes.map((bye) => (
           <div className="match-card" key={bye.id}>
-            <span className="match-board-no">Bye</span>
+            <span className="match-board-no is-bye">
+              <small>Bye</small>
+            </span>
             <div className="match-players">
               <span className="match-player">
                 {nameOf(participantsById, bye.player)}
@@ -108,8 +110,11 @@ export function RoundPanel({
           const blackPoints = pointsById.get(match.black) ?? 0;
 
           return (
-            <div className="match-card" key={match.id}>
-              <span className="match-board-no">Mesa {index + 1}</span>
+            <div className={`match-card ${match.result !== null ? 'is-decided' : ''}`} key={match.id}>
+              <span className="match-board-no">
+                <small>Mesa</small>
+                {index + 1}
+              </span>
               <div className="match-players">
                 <span
                   className={`match-player ${

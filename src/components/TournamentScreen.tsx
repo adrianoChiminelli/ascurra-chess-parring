@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ListOrdered, Plus, Swords } from 'lucide-react';
+import { Check, ListOrdered, Plus, Swords } from 'lucide-react';
 import type { Match, TournamentState } from '../types';
 import {
   canGenerateNextRound,
@@ -71,15 +71,26 @@ export function TournamentScreen({
     <>
       <header className="app-header">
         <div>
-          <img src={knightImage} className="logo-image" />
+          <img src={knightImage} className="logo-image" alt="Clube de Xadrez Ascurra" />
         </div>
-        <div className="app-title">{state.config.name}</div>
+        <div className="app-title">
+          <small>Ascurra Chess</small>
+          {state.config.name}
+        </div>
         <div className="tournament-header">
-          <span />
           <div className="tournament-header-actions">
             <div className="tournament-header-meta">
-              Rodada <strong>{state.rounds.length}</strong> de{' '}
-              <strong>{state.config.totalRounds}</strong>
+              <span>
+                Rodada <strong>{state.rounds.length}</strong> de{' '}
+                <strong>{state.config.totalRounds}</strong>
+              </span>
+              <span className="round-progress" aria-hidden>
+                {Array.from({ length: state.config.totalRounds }, (_, index) => {
+                  const round = state.rounds[index];
+                  const status = !round ? '' : isRoundComplete(round) ? 'done' : 'current';
+                  return <span key={index} className={`round-progress-pip ${status}`} />;
+                })}
+              </span>
             </div>
             <button
               type="button"
@@ -110,6 +121,7 @@ export function TournamentScreen({
             </button>
           </div>
 
+          <span className="tab-rail-label">Rodadas</span>
           {state.rounds.map((round) => (
             <button
               key={round.number}
@@ -122,7 +134,9 @@ export function TournamentScreen({
               <Swords size={16} />
               Rodada {round.number}
               {isRoundComplete(round) && (
-                <span className="tab-rail-round-badge">✓</span>
+                <span className="tab-rail-round-badge" aria-label="Concluída">
+                  <Check size={11} strokeWidth={3} />
+                </span>
               )}
             </button>
           ))}
