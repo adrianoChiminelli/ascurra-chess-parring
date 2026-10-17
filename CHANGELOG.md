@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-17
+
 ### Changed
 
 - Testando novo visual da interface.
@@ -18,5 +20,6 @@
 - Persistência do torneio atual no `localStorage`.
 - Créditos e avisos de licença das bibliotecas de terceiros.
 
-[Unreleased]: https://github.com/adrianoChiminelli/ascurra-chess-parring/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/adrianoChiminelli/ascurra-chess-parring/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/adrianoChiminelli/ascurra-chess-parring/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/adrianoChiminelli/ascurra-chess-parring/releases/tag/v1.0.0
