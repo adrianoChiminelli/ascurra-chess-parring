@@ -1,4 +1,5 @@
-import { Crown, HelpCircle } from 'lucide-react';
+import { Crown } from 'lucide-react';
+import { HintLabel } from './HintLabel';
 import { TIEBREAK_LABELS, type StandingRow, type TiebreakKind } from '../types';
 
 interface StandingsPanelProps {
@@ -36,13 +37,7 @@ export function StandingsPanel({ standings, roundsPlayed, tiebreakOrder }: Stand
                 <th>V-E-D</th>
                 {tiebreakOrder.map((kind) => (
                   <th key={kind}>
-                    <span className="th-with-hint">
-                      {TIEBREAK_LABELS[kind].short}
-                      <span className="hint-icon" tabIndex={0} aria-label={TIEBREAK_LABELS[kind].description}>
-                        <HelpCircle size={13} />
-                        <span className="hint-tooltip">{TIEBREAK_LABELS[kind].description}</span>
-                      </span>
-                    </span>
+                    <HintLabel label={TIEBREAK_LABELS[kind].short} description={TIEBREAK_LABELS[kind].description} />
                   </th>
                 ))}
               </tr>

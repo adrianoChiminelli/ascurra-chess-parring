@@ -332,10 +332,7 @@
 }
 
 .hint-tooltip {
-  position: absolute;
-  left: 50%;
-  top: calc(100% + 8px);
-  transform: translateX(-50%) translateY(-2px);
+  position: fixed;
   width: max-content;
   max-width: 200px;
   padding: 7px 10px;
@@ -344,25 +341,19 @@
   color: #fff;
   font-size: 11px;
   font-weight: 400;
-  letter-spacing: normal;
-  text-transform: none;
   line-height: 1.45;
   text-align: left;
   box-shadow: var(--shadow-lg);
-  opacity: 0;
-  visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.14s var(--ease), transform 0.14s var(--ease);
-  z-index: 12;
+  animation: hint-tooltip-in 0.14s var(--ease);
+  z-index: 1000;
 }
 
-.th-with-hint:hover .hint-tooltip,
-.th-with-hint:focus-within .hint-tooltip,
-.hint-icon:hover .hint-tooltip,
-.hint-icon:focus-visible .hint-tooltip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
+@keyframes hint-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
 }
 
 /* ---------- Rodada ---------- */

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fix
+ 
+- Corigindo tooltip que interferia no posicionamento da interface, criando novo component HintLabel
+
 ## [1.1.0] - 2026-10-17
 
 ### Changed
