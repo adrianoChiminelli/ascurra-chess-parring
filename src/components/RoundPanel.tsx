@@ -1,6 +1,7 @@
 import { ArrowRight, Coffee } from 'lucide-react';
 import { GiChessKing } from 'react-icons/gi';
 import type { Match, Participant, Round } from '../types';
+import { formatPoints } from '../lib/format';
 
 interface RoundPanelProps {
   round: Round;
@@ -17,9 +18,6 @@ function nameOf(participantsById: Map<string, Participant>, id: string) {
   return participantsById.get(id)?.name ?? id;
 }
 
-function formatPoints(points: number) {
-  return Number.isInteger(points) ? String(points) : points.toFixed(1).replace(/\.0$/, '');
-}
 
 export function RoundPanel({
   round,

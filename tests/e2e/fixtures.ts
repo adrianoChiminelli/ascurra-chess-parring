@@ -87,3 +87,10 @@ export async function standingsPoints(page: Page): Promise<number[]> {
   await railTab(page, 'Placar').click();
   return (await page.locator('.standings-table tbody .standings-points').allTextContents()).map(Number);
 }
+
+/** Torneio com várias rodadas concluídas, para estressar a barra lateral. */
+export async function startLongTournament(page: Page, rounds = 9) {
+  const players = Array.from({ length: 10 }, (_, i) => `Jogador ${i + 1}, ${2000 - i * 50}`);
+  await startTournament(page, { players, rounds });
+  for (let r = 2; r <= rounds; r += 1) await playRound(page, r);
+}

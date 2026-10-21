@@ -17,7 +17,8 @@ export default function App() {
   }, [tournament]);
 
   return (
-    <div className="app-shell">
+    // Na tela do torneio o layout ocupa a viewport e só o conteúdo rola.
+    <div className={tournament ? 'app-shell app-shell--fixed' : 'app-shell'}>
       {tournament ? (
         <TournamentScreen state={tournament} dispatch={dispatch} />
       ) : (

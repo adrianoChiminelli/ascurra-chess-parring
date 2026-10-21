@@ -4,12 +4,15 @@
 
 ### Added
 
+- Botões "Exportar" e "Manutenção" no rodapé da barra lateral; no mobile ficam fixos à direita da barra horizontal.
+- Aba de manutenção com a lista de participantes: número inicial, rating, pontuação atual e status.
 - Botão "Importar torneio" na tela inicial: continua um torneio a partir de um arquivo JSON exportado, com validação e mensagens de erro específicas.
 - Sorteio da ordem inicial dos participantes ao iniciar o torneio; o sorteio desempata jogadores com o mesmo rating e sem rating (critério FIDE).
 - Suporte no domínio a participantes retirados e a partidas decididas por W.O.
 
 ### Changed
 
+- Tela do torneio ocupa a altura da janela: cabeçalho e barra lateral fixos, só o conteúdo rola; cada aba abre no topo e a rodada ativa fica sempre visível na barra.
 - Formato salvo passa para a versão 2, com migração automática de torneios da versão 1 (pareamentos em andamento preservados).
 - Validação de integridade do torneio salvo (referências, sequência de rodadas e unicidade).
 

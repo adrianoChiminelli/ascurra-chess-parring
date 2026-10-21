@@ -100,6 +100,10 @@ button {
   flex-direction: column;
 }
 
+.app-shell--fixed {
+  height: 100%;
+}
+
 /* ---------- Cabeçalho ---------- */
 
 .app-header {

@@ -4,6 +4,10 @@
   margin-left: auto;
 }
 
+.home-header-actions .secondary-btn {
+  white-space: nowrap;
+}
+
 .import-error {
   display: flex;
   align-items: center;
