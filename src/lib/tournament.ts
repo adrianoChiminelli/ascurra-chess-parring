@@ -20,6 +20,7 @@ import {
 } from './tiebreaks';
 import { createId } from './ids';
 import { drawStartingRanks, type RandomSource } from './startingRank';
+import { MAX_NAME_LENGTH } from './participants';
 
 /** Participantes que ainda podem ser emparceirados. */
 export function activeParticipants(participants: Participant[]): Participant[] {
@@ -338,9 +339,64 @@ export function setMatchResult(
   const rounds = state.rounds.map((round) =>
     round.number !== roundNumber
       ? round
-      : { ...round, matches: round.matches.map((m) => (m.id === matchId ? { ...m, result } : m)) },
+      : {
+          ...round,
+          // Resultado de W.O. é definido pela retirada e não pode ser alterado.
+          matches: round.matches.map((m) => (m.id === matchId && m.forfeit === undefined ? { ...m, result } : m)),
+        },
   );
   return { ...state, rounds };
+}
+
+/** Nome válido: sem espaços nas pontas, não vazio e dentro do limite. */
+export function normalizeParticipantName(name: string): string | null {
+  const trimmed = name.trim();
+  return trimmed && trimmed.length <= MAX_NAME_LENGTH ? trimmed : null;
+}
+
+export function renameParticipant(state: TournamentState, participantId: string, name: string): TournamentState {
+  const normalized = normalizeParticipantName(name);
+  if (normalized === null) return state;
+
+  return {
+    ...state,
+    participants: state.participants.map((p) => (p.id === participantId ? { ...p, name: normalized } : p)),
+  };
+}
+
+/** Partida sem resultado do participante na rodada atual, se houver. */
+export function pendingMatchOf(state: TournamentState, participantId: string): Match | undefined {
+  const lastRound = state.rounds[state.rounds.length - 1];
+  return lastRound?.matches.find(
+    (m) => m.result === null && (m.white === participantId || m.black === participantId),
+  );
+}
+
+/**
+ * Retira o participante do torneio: ele mantém os pontos e continua no placar,
+ * mas não é mais emparceirado. A partida pendente na rodada atual vira W.O.
+ * para o adversário; resultados já registrados e byes são preservados.
+ */
+export function withdrawParticipant(state: TournamentState, participantId: string): TournamentState {
+  const participant = state.participants.find((p) => p.id === participantId);
+  const lastRound = state.rounds[state.rounds.length - 1];
+  if (!participant || participant.withdrawnInRound !== null || !lastRound) return state;
+
+  const pending = pendingMatchOf(state, participantId);
+  const forfeited = (m: Match): Match =>
+    m.white === participantId ? { ...m, result: 0, forfeit: 'white' } : { ...m, result: 1, forfeit: 'black' };
+
+  return {
+    ...state,
+    participants: state.participants.map((p) =>
+      p.id === participantId ? { ...p, withdrawnInRound: lastRound.number } : p,
+    ),
+    rounds: state.rounds.map((round) =>
+      round !== lastRound || !pending
+        ? round
+        : { ...round, matches: round.matches.map((m) => (m.id === pending.id ? forfeited(m) : m)) },
+    ),
+  };
 }
 
 export function appendNextRound(state: TournamentState): TournamentState {

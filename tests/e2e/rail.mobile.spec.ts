@@ -32,3 +32,16 @@ test('tabela de manutenção cabe na tela sem rolagem horizontal', async ({ page
   expect(await wrap.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
   await expect(page.locator('.status-tag').first()).toBeInViewport();
 });
+
+test('manutenção com retirado e edição aberta cabe na tela', async ({ page }) => {
+  await startLongTournament(page, 2);
+  await page.getByRole('button', { name: 'Manutenção' }).click();
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('button', { name: 'Remover Jogador 1 do torneio' }).click();
+  await page.getByRole('button', { name: 'Renomear Jogador 2' }).click();
+
+  const wrap = page.locator('.standings-table-wrap');
+  expect(await wrap.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+  await expect(page.getByRole('button', { name: 'Salvar nome' })).toBeInViewport();
+  await expect(page.getByRole('button', { name: 'Remover Jogador 3 do torneio' })).toBeInViewport();
+});

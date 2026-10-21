@@ -1,11 +1,19 @@
 import type { MatchResult, ParticipantDraft, TournamentConfig, TournamentState } from '../types';
-import { appendNextRound, createTournament, setMatchResult } from './tournament.ts';
+import {
+  appendNextRound,
+  createTournament,
+  renameParticipant,
+  setMatchResult,
+  withdrawParticipant,
+} from './tournament.ts';
 
 export type TournamentAction =
   | { type: 'start'; config: TournamentConfig; participants: ParticipantDraft[] }
   | { type: 'import'; state: TournamentState }
   | { type: 'setResult'; roundNumber: number; matchId: string; result: MatchResult | null }
   | { type: 'generateNextRound' }
+  | { type: 'renameParticipant'; participantId: string; name: string }
+  | { type: 'withdrawParticipant'; participantId: string }
   | { type: 'reset' };
 
 export function tournamentReducer(
@@ -23,5 +31,9 @@ export function tournamentReducer(
       return state && setMatchResult(state, action.roundNumber, action.matchId, action.result);
     case 'generateNextRound':
       return state && appendNextRound(state);
+    case 'renameParticipant':
+      return state && renameParticipant(state, action.participantId, action.name);
+    case 'withdrawParticipant':
+      return state && withdrawParticipant(state, action.participantId);
   }
 }

@@ -6,9 +6,11 @@
 
 - Botões "Exportar" e "Manutenção" no rodapé da barra lateral; no mobile ficam fixos à direita da barra horizontal.
 - Aba de manutenção com a lista de participantes: número inicial, rating, pontuação atual e status.
+- Renomear participantes na manutenção; o novo nome vale para rodadas e placar.
+- Remover participante do torneio: a partida pendente na rodada atual vira vitória por W.O. do adversário; o retirado continua no placar com a pontuação congelada (badge "Retirado") e não é mais emparceirado.
+- Partidas decididas por W.O. aparecem marcadas na rodada e com o resultado travado.
 - Botão "Importar torneio" na tela inicial: continua um torneio a partir de um arquivo JSON exportado, com validação e mensagens de erro específicas.
 - Sorteio da ordem inicial dos participantes ao iniciar o torneio; o sorteio desempata jogadores com o mesmo rating e sem rating (critério FIDE).
-- Suporte no domínio a participantes retirados e a partidas decididas por W.O.
 
 ### Changed
 

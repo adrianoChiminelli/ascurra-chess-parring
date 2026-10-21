@@ -152,10 +152,15 @@ export function RoundPanel({
                   </span>
                 </span>
               </div>
+              {match.forfeit !== undefined && (
+                <span className="match-forfeit-tag" title={`${nameOf(participantsById, match.forfeit === 'white' ? match.white : match.black)} não compareceu`}>
+                  W.O.
+                </span>
+              )}
               <div className="result-btns">
                 <button
                   type="button"
-                  disabled={isReadOnly}
+                  disabled={isReadOnly || match.forfeit !== undefined}
                   className={`result-btn ${whiteWon ? 'selected-win' : ''}`}
                   onClick={() => onSetResult(match.id, 1)}
                 >
@@ -163,7 +168,7 @@ export function RoundPanel({
                 </button>
                 <button
                   type="button"
-                  disabled={isReadOnly}
+                  disabled={isReadOnly || match.forfeit !== undefined}
                   className={`result-btn ${draw ? 'selected-draw' : ''}`}
                   onClick={() => onSetResult(match.id, 0.5)}
                 >
@@ -171,7 +176,7 @@ export function RoundPanel({
                 </button>
                 <button
                   type="button"
-                  disabled={isReadOnly}
+                  disabled={isReadOnly || match.forfeit !== undefined}
                   className={`result-btn ${blackWon ? 'selected-win' : ''}`}
                   onClick={() => onSetResult(match.id, 0)}
                 >

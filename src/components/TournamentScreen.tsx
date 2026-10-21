@@ -161,7 +161,12 @@ export function TournamentScreen({ state, dispatch }: TournamentScreenProps) {
               tiebreakOrder={state.config.tiebreakOrder}
             />
           ) : activeTab === 'maintenance' ? (
-            <MaintenancePanel participants={state.participants} pointsById={pointsById} />
+            <MaintenancePanel
+              state={state}
+              pointsById={pointsById}
+              onRename={(participantId, name) => dispatch({ type: 'renameParticipant', participantId, name })}
+              onWithdraw={(participantId) => dispatch({ type: 'withdrawParticipant', participantId })}
+            />
           ) : (
             (() => {
               const roundNumber = Number(activeTab.replace('round-', ''));
