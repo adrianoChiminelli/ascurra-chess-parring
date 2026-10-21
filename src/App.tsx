@@ -21,7 +21,10 @@ export default function App() {
       {tournament ? (
         <TournamentScreen state={tournament} dispatch={dispatch} />
       ) : (
-        <HomeScreen onStart={(config, participants) => dispatch({ type: 'start', config, participants })} />
+        <HomeScreen
+          onStart={(config, participants) => dispatch({ type: 'start', config, participants })}
+          onImport={(state) => dispatch({ type: 'import', state })}
+        />
       )}
     </div>
   );

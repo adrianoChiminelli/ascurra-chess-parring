@@ -3,6 +3,7 @@ import { appendNextRound, createTournament, setMatchResult } from './tournament.
 
 export type TournamentAction =
   | { type: 'start'; config: TournamentConfig; participants: ParticipantDraft[] }
+  | { type: 'import'; state: TournamentState }
   | { type: 'setResult'; roundNumber: number; matchId: string; result: MatchResult | null }
   | { type: 'generateNextRound' }
   | { type: 'reset' };
@@ -14,6 +15,8 @@ export function tournamentReducer(
   switch (action.type) {
     case 'start':
       return createTournament(action.config, action.participants);
+    case 'import':
+      return action.state;
     case 'reset':
       return null;
     case 'setResult':

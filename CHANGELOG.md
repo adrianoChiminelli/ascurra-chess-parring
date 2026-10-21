@@ -4,6 +4,7 @@
 
 ### Added
 
+- Botão "Importar torneio" na tela inicial: continua um torneio a partir de um arquivo JSON exportado, com validação e mensagens de erro específicas.
 - Sorteio da ordem inicial dos participantes ao iniciar o torneio; o sorteio desempata jogadores com o mesmo rating e sem rating (critério FIDE).
 - Suporte no domínio a participantes retirados e a partidas decididas por W.O.
 
