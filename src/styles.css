@@ -212,8 +212,16 @@ button {
   box-shadow: var(--shadow-sm);
 }
 
-.secondary-btn:hover {
+.secondary-btn:hover:not(:disabled) {
   border-color: var(--color-ink);
+}
+
+.secondary-btn:disabled {
+  color: var(--color-muted);
+  background: var(--color-surface-alt);
+  border-color: var(--color-border);
+  box-shadow: none;
+  cursor: not-allowed;
 }
 
 .form-error {

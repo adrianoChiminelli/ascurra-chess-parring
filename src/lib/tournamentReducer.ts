@@ -3,6 +3,7 @@ import {
   appendNextRound,
   createTournament,
   renameParticipant,
+  repairCurrentRound,
   setMatchResult,
   withdrawParticipant,
 } from './tournament.ts';
@@ -14,6 +15,7 @@ export type TournamentAction =
   | { type: 'generateNextRound' }
   | { type: 'renameParticipant'; participantId: string; name: string }
   | { type: 'withdrawParticipant'; participantId: string }
+  | { type: 'repairCurrentRound' }
   | { type: 'reset' };
 
 export function tournamentReducer(
@@ -35,5 +37,7 @@ export function tournamentReducer(
       return state && renameParticipant(state, action.participantId, action.name);
     case 'withdrawParticipant':
       return state && withdrawParticipant(state, action.participantId);
+    case 'repairCurrentRound':
+      return state && repairCurrentRound(state);
   }
 }

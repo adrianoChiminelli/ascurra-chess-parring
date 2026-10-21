@@ -403,3 +403,36 @@ export function appendNextRound(state: TournamentState): TournamentState {
   if (!canGenerateNextRound(state)) return state;
   return { ...state, rounds: [...state.rounds, generateNextRound(state.participants, state.rounds)] };
 }
+
+function pairingSignature(round: Round): string {
+  const games = round.matches.map((m) => `${m.white}>${m.black}`).sort();
+  const byes = round.byes.map((b) => b.player).sort();
+  return `${games.join(',')}|${byes.join(',')}`;
+}
+
+/**
+ * Rodada 1: sempre (novo sorteio). Demais: só se o pareamento mudaria — o
+ * sistema suíço é determinístico, então refazer sem mudança (ex.: retirada)
+ * repetiria exatamente os mesmos pares.
+ */
+export function canRepairCurrentRound(state: TournamentState): boolean {
+  const lastRound = state.rounds[state.rounds.length - 1];
+  if (!lastRound || activeParticipants(state.participants).length < 2) return false;
+  if (lastRound.number === 1) return true;
+
+  const simulated = generateNextRound(state.participants, state.rounds.slice(0, -1));
+  return pairingSignature(simulated) !== pairingSignature(lastRound);
+}
+
+/** Desfaz a rodada atual (resultados e W.O. incluídos) e emparceira de novo. */
+export function repairCurrentRound(state: TournamentState, random: RandomSource = Math.random): TournamentState {
+  if (!canRepairCurrentRound(state)) return state;
+
+  const previousRounds = state.rounds.slice(0, -1);
+  const participants =
+    previousRounds.length === 0
+      ? drawStartingRanks(state.participants, random)
+      : state.participants;
+
+  return { ...state, participants, rounds: [...previousRounds, generateNextRound(participants, previousRounds)] };
+}

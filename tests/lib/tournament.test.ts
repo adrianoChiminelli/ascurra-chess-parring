@@ -4,6 +4,7 @@ import { DEFAULT_TIEBREAK_ORDER } from '../../src/types';
 import {
   appendNextRound,
   canEditRound,
+  canRepairCurrentRound,
   canGenerateNextRound,
   computeStandings,
   createTournament,
@@ -11,6 +12,7 @@ import {
   isRoundComplete,
   pendingMatchOf,
   renameParticipant,
+  repairCurrentRound,
   setMatchResult,
   withdrawParticipant,
 } from '../../src/lib/tournament.ts';
@@ -312,5 +314,59 @@ describe('withdrawParticipant', () => {
   it('resultado de W.O. não pode ser editado', () => {
     const s = withdrawParticipant(ongoing(), 'a');
     expect(setMatchResult(s, 3, 'a-c', 0.5).rounds[2].matches[0]).toMatchObject({ result: 0, forfeit: 'white' });
+  });
+});
+
+describe('reemparceirar a rodada atual', () => {
+  const pairsOf = (r: Round) => r.matches.map((m) => `${m.white}-${m.black}`).join();
+  const unrated = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((id) => ({ id, name: id, rating: null }));
+  const config = state(players, []).config;
+
+  it('rodada 1: novo sorteio dos números iniciais e novo pareamento', () => {
+    const created = createTournament(config, unrated, seededRandom(1));
+    const repaired = repairCurrentRound(created, seededRandom(2));
+
+    expect(canRepairCurrentRound(created)).toBe(true);
+    expect(repaired.rounds).toHaveLength(1);
+    expect(repaired.participants.map((p) => p.startingRank).sort()).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(pairsOf(repaired.rounds[0])).not.toBe(pairsOf(created.rounds[0]));
+  });
+
+  it('descarta os resultados da rodada atual', () => {
+    const created = createTournament(config, unrated, seededRandom(1));
+    const withResult = setMatchResult(created, 1, created.rounds[0].matches[0].id, 1);
+    const repaired = repairCurrentRound(withResult, seededRandom(2));
+
+    expect(repaired.rounds[0].matches.every((m) => m.result === null)).toBe(true);
+  });
+
+  it('rodada 2 sem mudança: indisponível, pois repetiria os mesmos pares', () => {
+    const six = ranked(['a', 'b', 'c', 'd', 'e', 'f'].map((id) => participant(id)));
+    const s = appendNextRound(state(six, [round(1, [match('a', 'd', 1), match('b', 'e', 1), match('c', 'f', 1)])]));
+
+    expect(canRepairCurrentRound(s)).toBe(false);
+    expect(repairCurrentRound(s)).toBe(s);
+  });
+
+  it('rodada 2 após retirada: refaz sem o retirado, sem W.O. e mantendo a rodada 1', () => {
+    const six = ranked(['a', 'b', 'c', 'd', 'e', 'f'].map((id) => participant(id)));
+    const first = round(1, [match('a', 'd', 1), match('b', 'e', 1), match('c', 'f', 1)]);
+    const s = withdrawParticipant(appendNextRound(state(six, [first])), 'a');
+
+    expect(canRepairCurrentRound(s)).toBe(true);
+    const repaired = repairCurrentRound(s);
+    const second = repaired.rounds[1];
+    const seated = [...second.matches.flatMap((m) => [m.white, m.black]), ...second.byes.map((b) => b.player)];
+
+    expect(repaired.rounds[0]).toBe(s.rounds[0]);
+    expect(repaired.participants).toBe(s.participants);
+    expect(seated.sort()).toEqual(['b', 'c', 'd', 'e', 'f']);
+    expect(second.matches.some((m) => m.forfeit !== undefined)).toBe(false);
+  });
+
+  it('indisponível com menos de 2 ativos', () => {
+    const two = ranked([participant('a'), participant('b')]);
+    const s = withdrawParticipant(state(two, [round(1, [match('a', 'b', null)])]), 'a');
+    expect(canRepairCurrentRound(s)).toBe(false);
   });
 });

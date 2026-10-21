@@ -1,4 +1,4 @@
-import { ArrowRight, Coffee } from 'lucide-react';
+import { ArrowRight, Coffee, Shuffle } from 'lucide-react';
 import { GiChessKing } from 'react-icons/gi';
 import type { Match, Participant, Round } from '../types';
 import { formatPoints } from '../lib/format';
@@ -12,10 +12,19 @@ interface RoundPanelProps {
   isCurrentRound: boolean;
   canGenerateNext: boolean;
   onGenerateNext: () => void;
+  canRepair: boolean;
+  onRepair: () => void;
 }
 
 function nameOf(participantsById: Map<string, Participant>, id: string) {
   return participantsById.get(id)?.name ?? id;
+}
+
+function repairConfirmation(round: Round): string | null {
+  const decided = round.matches.filter((m) => m.result !== null).length;
+  if (decided === 0) return null;
+  const draw = round.number === 1 ? ' e fazer um novo sorteio da ordem inicial' : '';
+  return `Reemparceirar a rodada ${round.number}${draw}?\n\n${decided} resultado${decided === 1 ? '' : 's'} desta rodada ser${decided === 1 ? 'á descartado' : 'ão descartados'}.`;
 }
 
 
@@ -28,7 +37,14 @@ export function RoundPanel({
   isCurrentRound,
   canGenerateNext,
   onGenerateNext,
+  canRepair,
+  onRepair,
 }: RoundPanelProps) {
+  function handleRepair() {
+    const confirmation = repairConfirmation(round);
+    if (confirmation === null || window.confirm(confirmation)) onRepair();
+  }
+
   const isFinalRound = round.number >= totalRounds;
   const isReadOnly = !isCurrentRound;
   const isInvalidRound = round.isInvalid;
@@ -82,6 +98,24 @@ export function RoundPanel({
             {isReadOnly && ' · somente leitura'}
           </p>
         </div>
+        {isCurrentRound && (
+          <button
+            type="button"
+            className="secondary-btn"
+            disabled={!canRepair}
+            onClick={handleRepair}
+            title={
+              canRepair
+                ? round.number === 1
+                  ? 'Novo sorteio da ordem inicial e novo pareamento'
+                  : 'Desfaz esta rodada e emparceira novamente'
+                : 'Nada mudou desde o pareamento: refazer geraria os mesmos pares'
+            }
+          >
+            <Shuffle size={15} />
+            Reemparceirar
+          </button>
+        )}
       </div>
 
       <div className="match-list">

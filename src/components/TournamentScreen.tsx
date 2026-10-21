@@ -4,6 +4,7 @@ import type { TournamentState } from '../types';
 import {
   canEditRound,
   canGenerateNextRound,
+  canRepairCurrentRound,
   computeStandings,
   isRoundComplete,
 } from '../lib/tournament.ts';
@@ -57,6 +58,8 @@ export function TournamentScreen({ state, dispatch }: TournamentScreenProps) {
   }
 
   const canGenerateNext = canGenerateNextRound(state);
+  // Simula o pareamento: memoizado para não rodar a cada render.
+  const canRepair = useMemo(() => canRepairCurrentRound(state), [state]);
   const roundsPlayed = state.rounds.filter(isRoundComplete).length;
 
   return (
@@ -185,6 +188,8 @@ export function TournamentScreen({ state, dispatch }: TournamentScreenProps) {
                   isCurrentRound={isCurrentRound}
                   canGenerateNext={isCurrentRound && canGenerateNext}
                   onGenerateNext={handleGenerateNext}
+                  canRepair={isCurrentRound && canRepair}
+                  onRepair={() => dispatch({ type: 'repairCurrentRound' })}
                 />
               );
             })()
