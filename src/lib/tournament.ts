@@ -4,6 +4,7 @@ import type {
   Match,
   MatchResult,
   Participant,
+  ParticipantDraft,
   Round,
   StandingRow,
   TournamentConfig,
@@ -18,25 +19,27 @@ import {
   toPlayersForTiebreak,
 } from './tiebreaks';
 import { createId } from './ids';
+import { drawStartingRanks, type RandomSource } from './startingRank';
+
+/** Participantes que ainda podem ser emparceirados. */
+export function activeParticipants(participants: Participant[]): Participant[] {
+  return participants.filter((p) => p.withdrawnInRound === null);
+}
 
 /**
- * Converte os participantes para o formato que a lib de pareamento espera,
- * ordenados por rating (jogadores sem rating entram por último) — essa ordem
- * define a "número de emparceiramento" usada no sorteio da 1ª rodada.
+ * Converte os participantes ativos para o formato da lib de pareamento. O rank
+ * segue o número inicial, renumerado sem lacunas deixadas por retirados. A lib
+ * aceita histórico com jogadores fora da lista (retirados).
  */
 function toPairingPlayers(participants: Participant[]): Player[] {
-  const sorted = [...participants].sort((a, b) => {
-    if (a.rating === null && b.rating === null) return 0;
-    if (a.rating === null) return 1;
-    if (b.rating === null) return -1;
-    return b.rating - a.rating;
-  });
-  return sorted.map((p, index) => ({
-    id: p.id,
-    rating: p.rating ?? undefined,
-    points: 0,
-    rank: index + 1,
-  }));
+  return [...activeParticipants(participants)]
+    .sort((a, b) => a.startingRank - b.startingRank)
+    .map((p, index) => ({
+      id: p.id,
+      rating: p.rating ?? undefined,
+      points: 0,
+      rank: index + 1,
+    }));
 }
 
 function compareNames(a: StandingRow, b: StandingRow): number {
@@ -112,6 +115,9 @@ export function generateNextRound(
 ): Round {
   const players = toPairingPlayers(participants);
   const completedRounds = toCompletedRounds(rounds);
+  if (players.length < 2) {
+    return { number: completedRounds.length + 1, matches: [], byes: [], isInvalid: true };
+  }
   const result = pair(players, completedRounds);
 
   const matches: Match[] = result.games.map((g) => ({
@@ -161,9 +167,12 @@ export function computeStandings(state: TournamentState): StandingRow[] {
       const whiteRow = rows.get(match.white);
       const blackRow = rows.get(match.black);
 
+      // W.O. conta ponto e vitória/derrota, mas não é partida jogada.
+      const played = match.forfeit === undefined ? 1 : 0;
+
       if (whiteRow) {
         whiteRow.points += match.result;
-        whiteRow.played += 1;
+        whiteRow.played += played;
         if (match.result === 1) whiteRow.wins += 1;
         else if (match.result === 0.5) whiteRow.draws += 1;
         else whiteRow.losses += 1;
@@ -172,7 +181,7 @@ export function computeStandings(state: TournamentState): StandingRow[] {
       if (blackRow) {
         const blackResult: MatchResult = match.result === 1 ? 0 : match.result === 0 ? 1 : 0.5;
         blackRow.points += blackResult;
-        blackRow.played += 1;
+        blackRow.played += played;
         if (blackResult === 1) blackRow.wins += 1;
         else if (blackResult === 0.5) blackRow.draws += 1;
         else blackRow.losses += 1;
@@ -293,7 +302,7 @@ export function computeStandings(state: TournamentState): StandingRow[] {
 }
 
 export function canGenerateNextRound(state: TournamentState): boolean {
-  if (state.participants.length < 2) return false;
+  if (activeParticipants(state.participants).length < 2) return false;
   if (state.rounds.length >= state.config.totalRounds) return false;
   if (state.rounds.length === 0) return true;
   const lastRound = state.rounds[state.rounds.length - 1];
@@ -309,7 +318,12 @@ export function canEditRound(state: TournamentState, roundNumber: number): boole
   return lastRound !== undefined && lastRound.number === roundNumber;
 }
 
-export function createTournament(config: TournamentConfig, participants: Participant[]): TournamentState {
+export function createTournament(
+  config: TournamentConfig,
+  drafts: ParticipantDraft[],
+  random: RandomSource = Math.random,
+): TournamentState {
+  const participants: Participant[] = drawStartingRanks(drafts, random).map((p) => ({ ...p, withdrawnInRound: null }));
   return { config, participants, rounds: [generateNextRound(participants, [])] };
 }
 

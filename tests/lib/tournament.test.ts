@@ -11,9 +11,15 @@ import {
   isRoundComplete,
   setMatchResult,
 } from '../../src/lib/tournament.ts';
+import { seededRandom } from './random.ts';
 
 function participant(id: string, name = id, rating: number | null = null): Participant {
-  return { id, name, rating };
+  return { id, name, rating, startingRank: 1, withdrawnInRound: null };
+}
+
+/** Atribui números iniciais na ordem recebida. */
+function ranked(list: Participant[]): Participant[] {
+  return list.map((p, index) => ({ ...p, startingRank: index + 1 }));
 }
 
 function match(white: string, black: string, result: MatchResult | null): Match {
@@ -41,7 +47,7 @@ function ranking(s: TournamentState): string[] {
  * a: 2 pts | b ("Zé") e c ("Ana"): 1 pt cada | d: 0 pts.
  * b venceu c no confronto direto e enfrentou adversários mais fortes (BH 3 x 1).
  */
-const players = [participant('a', 'Alfa'), participant('b', 'Zé'), participant('c', 'Ana'), participant('d', 'Delta')];
+const players = ranked([participant('a', 'Alfa'), participant('b', 'Zé'), participant('c', 'Ana'), participant('d', 'Delta')]);
 const rounds = [
   round(1, [match('a', 'b', 1), match('c', 'd', 1)]),
   round(2, [match('a', 'd', 1), match('b', 'c', 1)]),
@@ -98,21 +104,21 @@ describe('generateNextRound', () => {
   });
 
   it('atribui bye com número ímpar', () => {
-    const generated = generateNextRound([...players, participant('e')], []);
+    const generated = generateNextRound(ranked([...players, participant('e')]), []);
 
     expect(generated.matches).toHaveLength(2);
     expect(generated.byes).toHaveLength(1);
   });
 
   it('marca a rodada como inválida quando não há pareamento possível (número par)', () => {
-    const two = [participant('a'), participant('b')];
+    const two = ranked([participant('a'), participant('b')]);
     const generated = generateNextRound(two, [round(1, [match('a', 'b', 1)])]);
 
     expect(generated).toMatchObject({ number: 2, isInvalid: true, matches: [], byes: [] });
   });
 
   it('marca a rodada como inválida quando não há pareamento possível (número ímpar)', () => {
-    const three = [participant('a'), participant('b'), participant('c')];
+    const three = ranked([participant('a'), participant('b'), participant('c')]);
     const played = [
       round(1, [match('a', 'b', 0.5)], ['c']),
       round(2, [match('c', 'a', 0.5)], ['b']),
@@ -172,5 +178,68 @@ describe('regras de rodada', () => {
     const created = createTournament(state(players, []).config, players);
     expect(created.rounds).toHaveLength(1);
     expect(created.rounds[0].matches).toHaveLength(2);
+  });
+});
+
+describe('participantes retirados', () => {
+  const withdrawn = (list: Participant[], id: string, roundNumber: number) =>
+    list.map((p) => (p.id === id ? { ...p, withdrawnInRound: roundNumber } : p));
+
+  it('não são emparceirados nas rodadas seguintes', () => {
+    const list = withdrawn(ranked([...players, participant('e')]), 'e', 1);
+    const generated = generateNextRound(list, [round(1, [match('a', 'b', 1), match('c', 'd', 1)], ['e'])]);
+    const seated = [...generated.matches.flatMap((m) => [m.white, m.black]), ...generated.byes.map((b) => b.player)];
+
+    expect(seated.sort()).toEqual(['a', 'b', 'c', 'd']);
+    expect(generated.byes).toEqual([]);
+  });
+
+  it('continuam no placar com os pontos que tinham', () => {
+    const s = state(withdrawn(players, 'a', 2), rounds);
+    expect(computeStandings(s).find((row) => row.participant.id === 'a')?.points).toBe(2);
+  });
+
+  it('com menos de 2 ativos, não há próxima rodada', () => {
+    const s = state(withdrawn(withdrawn(withdrawn(players, 'a', 2), 'b', 2), 'c', 2), rounds);
+    expect(canGenerateNextRound(s)).toBe(false);
+    expect(generateNextRound(s.participants, s.rounds).isInvalid).toBe(true);
+  });
+});
+
+describe('W.O.', () => {
+  const forfeitRound = round(1, [{ id: 'wo', white: 'a', black: 'b', result: 1, forfeit: 'black' }, match('c', 'd', 0.5)]);
+
+  it('conta ponto e vitória/derrota, mas não como partida jogada', () => {
+    const byId = new Map(computeStandings(state(players, [forfeitRound])).map((row) => [row.participant.id, row]));
+
+    expect(byId.get('a')).toMatchObject({ points: 1, wins: 1, played: 0 });
+    expect(byId.get('b')).toMatchObject({ points: 0, losses: 1, played: 0 });
+    expect(byId.get('c')).toMatchObject({ points: 0.5, draws: 1, played: 1 });
+  });
+
+  it('é aceito no histórico de pareamento', () => {
+    const generated = generateNextRound(players, [forfeitRound]);
+    expect(generated.isInvalid).toBe(false);
+    expect(generated.matches).toHaveLength(2);
+  });
+});
+
+describe('createTournament', () => {
+  const drafts = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => ({ id, name: id, rating: null }));
+  const config = state(players, []).config;
+
+  it('sorteia números iniciais e marca todos como ativos', () => {
+    const created = createTournament(config, drafts, seededRandom(3));
+
+    expect(created.participants.map((p) => p.startingRank).sort()).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(created.participants.every((p) => p.withdrawnInRound === null)).toBe(true);
+  });
+
+  it('é reprodutível com a mesma fonte aleatória e varia entre fontes', () => {
+    const pairsOf = (seed: number) =>
+      createTournament(config, drafts, seededRandom(seed)).rounds[0].matches.map((m) => `${m.white}-${m.black}`).join();
+
+    expect(pairsOf(11)).toBe(pairsOf(11));
+    expect(new Set([1, 2, 3, 4, 5, 6, 7, 8].map(pairsOf)).size).toBeGreaterThan(1);
   });
 });

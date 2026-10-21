@@ -7,7 +7,7 @@ import {
   Users,
   Play
 } from 'lucide-react';
-import { DEFAULT_TIEBREAK_ORDER, type Participant, type TiebreakKind, type TournamentConfig } from '../types';
+import { DEFAULT_TIEBREAK_ORDER, type ParticipantDraft, type TiebreakKind, type TournamentConfig } from '../types';
 import { createId } from '../lib/ids';
 import { MAX_NAME_LENGTH, parseBatchText } from '../lib/participants';
 import { TiebreakPicker } from './TiebreakPicker';
@@ -15,7 +15,7 @@ import './styles/HomeScreen.css';
 import knightImage from '../assets/knight.png';
 
 interface HomeScreenProps {
-  onStart: (config: TournamentConfig, participants: Participant[]) => void;
+  onStart: (config: TournamentConfig, participants: ParticipantDraft[]) => void;
 }
 
 type EntryMode = 'individual' | 'batch';
@@ -25,7 +25,7 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
   const [totalRounds, setTotalRounds] = useState(5);
   const [tiebreakOrder, setTiebreakOrder] = useState<TiebreakKind[]>(DEFAULT_TIEBREAK_ORDER);
   const [entryMode, setEntryMode] = useState<EntryMode>('individual');
-  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [participants, setParticipants] = useState<ParticipantDraft[]>([]);
 
   const [singleName, setSingleName] = useState('');
   const [singleRating, setSingleRating] = useState('');

@@ -1,8 +1,8 @@
-import type { MatchResult, Participant, TournamentConfig, TournamentState } from '../types';
+import type { MatchResult, ParticipantDraft, TournamentConfig, TournamentState } from '../types';
 import { appendNextRound, createTournament, setMatchResult } from './tournament.ts';
 
 export type TournamentAction =
-  | { type: 'start'; config: TournamentConfig; participants: Participant[] }
+  | { type: 'start'; config: TournamentConfig; participants: ParticipantDraft[] }
   | { type: 'setResult'; roundNumber: number; matchId: string; result: MatchResult | null }
   | { type: 'generateNextRound' }
   | { type: 'reset' };

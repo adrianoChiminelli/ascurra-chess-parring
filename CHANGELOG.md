@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+### Added
+
+- Sorteio da ordem inicial dos participantes ao iniciar o torneio; o sorteio desempata jogadores com o mesmo rating e sem rating (critério FIDE).
+- Suporte no domínio a participantes retirados e a partidas decididas por W.O.
+
+### Changed
+
+- Formato salvo passa para a versão 2, com migração automática de torneios da versão 1 (pareamentos em andamento preservados).
+- Validação de integridade do torneio salvo (referências, sequência de rodadas e unicidade).
+
+### Fixed
+
+- Torneio salvo por uma versão mais nova do app não é mais apagado ao abrir.
+
 ## [1.2.0] - 2026-10-21
 
 ### Fixed
