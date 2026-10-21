@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-21
+
 ### Fixed
 
 - Rodada sem pareamento possível com número par de jogadores era criada vazia e tratada como concluída.
@@ -44,7 +46,8 @@
 - Persistência do torneio atual no `localStorage`.
 - Créditos e avisos de licença das bibliotecas de terceiros.
 
-[Unreleased]: https://github.com/adrianoChiminelli/ascurra-chess-parring/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/adrianoChiminelli/ascurra-chess-parring/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/adrianoChiminelli/ascurra-chess-parring/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/adrianoChiminelli/ascurra-chess-parring/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/adrianoChiminelli/ascurra-chess-parring/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/adrianoChiminelli/ascurra-chess-parring/releases/tag/v1.0.0
