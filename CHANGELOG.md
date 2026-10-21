@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-21
+
 ### Added
 
 - Botões "Exportar" e "Manutenção" no rodapé da barra lateral; no mobile ficam fixos à direita da barra horizontal.
@@ -67,7 +69,8 @@
 - Persistência do torneio atual no `localStorage`.
 - Créditos e avisos de licença das bibliotecas de terceiros.
 
-[Unreleased]: https://github.com/adrianoChiminelli/ascurra-chess-parring/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/adrianoChiminelli/ascurra-chess-parring/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/adrianoChiminelli/ascurra-chess-parring/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/adrianoChiminelli/ascurra-chess-parring/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/adrianoChiminelli/ascurra-chess-parring/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/adrianoChiminelli/ascurra-chess-parring/compare/v1.0.0...v1.1.0
