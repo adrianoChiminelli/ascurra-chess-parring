@@ -57,6 +57,11 @@ export function StandingsPanel({ standings, roundsPlayed, tiebreakOrder }: Stand
                         {isLeader && (
                           <Crown size={13} className="standings-leader-icon" aria-label="Líder" />
                         )}
+                        {row.participant.withdrawnInRound !== null && (
+                          <span className="status-tag is-withdrawn" title={`Retirado na rodada ${row.participant.withdrawnInRound}`}>
+                            Retirado
+                          </span>
+                        )}
                       </div>
                       {row.participant.rating !== null && (
                         <div className="standings-rating">{row.participant.rating}</div>

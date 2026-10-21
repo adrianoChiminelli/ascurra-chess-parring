@@ -1,13 +1,17 @@
-import { useMemo, useState, type Dispatch } from 'react';
-import { Check, ListOrdered, Plus, Swords } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type Dispatch } from 'react';
+import { Check, Download, ListOrdered, Plus, Swords, Wrench } from 'lucide-react';
 import type { TournamentState } from '../types';
 import {
   canEditRound,
   canGenerateNextRound,
+  canRepairCurrentRound,
   computeStandings,
   isRoundComplete,
 } from '../lib/tournament.ts';
 import type { TournamentAction } from '../lib/tournamentReducer.ts';
+import { downloadTextFile } from '../lib/download.ts';
+import { exportFileName, serializeTournament } from '../lib/tournamentFile.ts';
+import { MaintenancePanel } from './MaintenancePanel';
 import { StandingsPanel } from './StandingsPanel';
 import { RoundPanel } from './RoundPanel';
 import './styles/TournamentScreen.css';
@@ -18,12 +22,20 @@ interface TournamentScreenProps {
   dispatch: Dispatch<TournamentAction>;
 }
 
-type TabKey = 'standings' | `round-${number}`;
+type TabKey = 'standings' | 'maintenance' | `round-${number}`;
 
 export function TournamentScreen({ state, dispatch }: TournamentScreenProps) {
   const [activeTab, setActiveTab] = useState<TabKey>(
     state.rounds.length > 0 ? `round-${state.rounds.length}` : 'standings',
   );
+  const railRef = useRef<HTMLElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Cada aba abre do topo, e o item ativo da barra fica visível mesmo com muitas rodadas.
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 });
+    railRef.current?.querySelector('.tab-rail-item.active')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [activeTab]);
 
   const participantsById = useMemo(
     () => new Map(state.participants.map((p) => [p.id, p])),
@@ -41,7 +53,13 @@ export function TournamentScreen({ state, dispatch }: TournamentScreenProps) {
     setActiveTab(`round-${state.rounds.length + 1}`);
   }
 
+  function handleExport() {
+    downloadTextFile(exportFileName(state), serializeTournament(state));
+  }
+
   const canGenerateNext = canGenerateNextRound(state);
+  // Simula o pareamento: memoizado para não rodar a cada render.
+  const canRepair = useMemo(() => canRepairCurrentRound(state), [state]);
   const roundsPlayed = state.rounds.filter(isRoundComplete).length;
 
   return (
@@ -86,7 +104,7 @@ export function TournamentScreen({ state, dispatch }: TournamentScreenProps) {
       </header>
 
       <div className="tournament-body">
-        <nav className="tab-rail">
+        <nav className="tab-rail" ref={railRef}>
           <div className="tab-rail-standings">
             <button
               type="button"
@@ -99,32 +117,58 @@ export function TournamentScreen({ state, dispatch }: TournamentScreenProps) {
           </div>
 
           <span className="tab-rail-label">Rodadas</span>
-          {state.rounds.map((round) => (
-            <button
-              key={round.number}
-              type="button"
-              className={`tab-rail-item ${
-                activeTab === `round-${round.number}` ? 'active' : ''
-              }`}
-              onClick={() => setActiveTab(`round-${round.number}`)}
-            >
-              <Swords size={16} />
-              Rodada {round.number}
-              {isRoundComplete(round) && (
-                <span className="tab-rail-round-badge" aria-label="Concluída">
-                  <Check size={11} strokeWidth={3} />
-                </span>
-              )}
+          <div className="tab-rail-rounds">
+            {state.rounds.map((round) => (
+              <button
+                key={round.number}
+                type="button"
+                className={`tab-rail-item ${
+                  activeTab === `round-${round.number}` ? 'active' : ''
+                }`}
+                onClick={() => setActiveTab(`round-${round.number}`)}
+              >
+                <Swords size={16} />
+                Rodada {round.number}
+                {isRoundComplete(round) && (
+                  <span className="tab-rail-round-badge" aria-label="Concluída">
+                    <Check size={11} strokeWidth={3} />
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="tab-rail-footer">
+            <button type="button" className="tab-rail-item" onClick={handleExport} aria-label="Exportar torneio" title="Exportar torneio">
+              <Download size={16} />
+              <span className="tab-rail-item-label">Exportar</span>
             </button>
-          ))}
+            <button
+              type="button"
+              className={`tab-rail-item ${activeTab === 'maintenance' ? 'active' : ''}`}
+              onClick={() => setActiveTab('maintenance')}
+              aria-label="Manutenção"
+              title="Manutenção"
+            >
+              <Wrench size={16} />
+              <span className="tab-rail-item-label">Manutenção</span>
+            </button>
+          </div>
         </nav>
 
-        <div className="tab-content">
+        <div className="tab-content" ref={contentRef}>
           {activeTab === 'standings' ? (
             <StandingsPanel
               standings={standings}
               roundsPlayed={roundsPlayed}
               tiebreakOrder={state.config.tiebreakOrder}
+            />
+          ) : activeTab === 'maintenance' ? (
+            <MaintenancePanel
+              state={state}
+              pointsById={pointsById}
+              onRename={(participantId, name) => dispatch({ type: 'renameParticipant', participantId, name })}
+              onWithdraw={(participantId) => dispatch({ type: 'withdrawParticipant', participantId })}
             />
           ) : (
             (() => {
@@ -144,6 +188,8 @@ export function TournamentScreen({ state, dispatch }: TournamentScreenProps) {
                   isCurrentRound={isCurrentRound}
                   canGenerateNext={isCurrentRound && canGenerateNext}
                   onGenerateNext={handleGenerateNext}
+                  canRepair={isCurrentRound && canRepair}
+                  onRepair={() => dispatch({ type: 'repairCurrentRound' })}
                 />
               );
             })()

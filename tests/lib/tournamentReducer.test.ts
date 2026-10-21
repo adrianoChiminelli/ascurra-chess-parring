@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_TIEBREAK_ORDER, type Participant } from '../../src/types';
+import { DEFAULT_TIEBREAK_ORDER, type ParticipantDraft } from '../../src/types';
 import { tournamentReducer } from '../../src/lib/tournamentReducer.ts';
 
-const participants: Participant[] = ['a', 'b', 'c', 'd'].map((id) => ({ id, name: id, rating: null }));
+const participants: ParticipantDraft[] = ['a', 'b', 'c', 'd'].map((id) => ({ id, name: id, rating: null }));
 const config = { name: 'Teste', totalRounds: 3, tiebreakOrder: DEFAULT_TIEBREAK_ORDER };
 
 describe('tournamentReducer', () => {

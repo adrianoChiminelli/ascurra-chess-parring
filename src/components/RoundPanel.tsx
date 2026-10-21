@@ -1,6 +1,7 @@
-import { ArrowRight, Coffee } from 'lucide-react';
+import { ArrowRight, Coffee, Shuffle } from 'lucide-react';
 import { GiChessKing } from 'react-icons/gi';
 import type { Match, Participant, Round } from '../types';
+import { formatPoints } from '../lib/format';
 
 interface RoundPanelProps {
   round: Round;
@@ -11,15 +12,21 @@ interface RoundPanelProps {
   isCurrentRound: boolean;
   canGenerateNext: boolean;
   onGenerateNext: () => void;
+  canRepair: boolean;
+  onRepair: () => void;
 }
 
 function nameOf(participantsById: Map<string, Participant>, id: string) {
   return participantsById.get(id)?.name ?? id;
 }
 
-function formatPoints(points: number) {
-  return Number.isInteger(points) ? String(points) : points.toFixed(1).replace(/\.0$/, '');
+function repairConfirmation(round: Round): string | null {
+  const decided = round.matches.filter((m) => m.result !== null).length;
+  if (decided === 0) return null;
+  const draw = round.number === 1 ? ' e fazer um novo sorteio da ordem inicial' : '';
+  return `Reemparceirar a rodada ${round.number}${draw}?\n\n${decided} resultado${decided === 1 ? '' : 's'} desta rodada ser${decided === 1 ? 'á descartado' : 'ão descartados'}.`;
 }
+
 
 export function RoundPanel({
   round,
@@ -30,7 +37,14 @@ export function RoundPanel({
   isCurrentRound,
   canGenerateNext,
   onGenerateNext,
+  canRepair,
+  onRepair,
 }: RoundPanelProps) {
+  function handleRepair() {
+    const confirmation = repairConfirmation(round);
+    if (confirmation === null || window.confirm(confirmation)) onRepair();
+  }
+
   const isFinalRound = round.number >= totalRounds;
   const isReadOnly = !isCurrentRound;
   const isInvalidRound = round.isInvalid;
@@ -84,6 +98,24 @@ export function RoundPanel({
             {isReadOnly && ' · somente leitura'}
           </p>
         </div>
+        {isCurrentRound && (
+          <button
+            type="button"
+            className="secondary-btn"
+            disabled={!canRepair}
+            onClick={handleRepair}
+            title={
+              canRepair
+                ? round.number === 1
+                  ? 'Novo sorteio da ordem inicial e novo pareamento'
+                  : 'Desfaz esta rodada e emparceira novamente'
+                : 'Nada mudou desde o pareamento: refazer geraria os mesmos pares'
+            }
+          >
+            <Shuffle size={15} />
+            Reemparceirar
+          </button>
+        )}
       </div>
 
       <div className="match-list">
@@ -154,10 +186,15 @@ export function RoundPanel({
                   </span>
                 </span>
               </div>
+              {match.forfeit !== undefined && (
+                <span className="match-forfeit-tag" title={`${nameOf(participantsById, match.forfeit === 'white' ? match.white : match.black)} não compareceu`}>
+                  W.O.
+                </span>
+              )}
               <div className="result-btns">
                 <button
                   type="button"
-                  disabled={isReadOnly}
+                  disabled={isReadOnly || match.forfeit !== undefined}
                   className={`result-btn ${whiteWon ? 'selected-win' : ''}`}
                   onClick={() => onSetResult(match.id, 1)}
                 >
@@ -165,7 +202,7 @@ export function RoundPanel({
                 </button>
                 <button
                   type="button"
-                  disabled={isReadOnly}
+                  disabled={isReadOnly || match.forfeit !== undefined}
                   className={`result-btn ${draw ? 'selected-draw' : ''}`}
                   onClick={() => onSetResult(match.id, 0.5)}
                 >
@@ -173,7 +210,7 @@ export function RoundPanel({
                 </button>
                 <button
                   type="button"
-                  disabled={isReadOnly}
+                  disabled={isReadOnly || match.forfeit !== undefined}
                   className={`result-btn ${blackWon ? 'selected-win' : ''}`}
                   onClick={() => onSetResult(match.id, 0)}
                 >

@@ -100,6 +100,10 @@ button {
   flex-direction: column;
 }
 
+.app-shell--fixed {
+  height: 100%;
+}
+
 /* ---------- Cabeçalho ---------- */
 
 .app-header {
@@ -208,12 +212,32 @@ button {
   box-shadow: var(--shadow-sm);
 }
 
-.secondary-btn:hover {
+.secondary-btn:hover:not(:disabled) {
   border-color: var(--color-ink);
+}
+
+.secondary-btn:disabled {
+  color: var(--color-muted);
+  background: var(--color-surface-alt);
+  border-color: var(--color-border);
+  box-shadow: none;
+  cursor: not-allowed;
 }
 
 .form-error {
   color: var(--color-loss);
   font-size: 0.82rem;
   margin: 0 0 0.75rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

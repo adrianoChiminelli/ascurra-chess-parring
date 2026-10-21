@@ -13,7 +13,7 @@ com foco em uso local e em estudo/prática de torneios suíços.
 - Cálculo de desempate por: Buchholz Cut 1, Buchholz Total, Sonneborn-Berger,
   Confronto direto e Número de vitórias.
 - Interface local em React + TypeScript.
-- Sem backend: tudo roda no navegador e o torneio fica em memória durante a sessão.
+- Sem backend: tudo roda no navegador; o torneio atual fica salvo no navegador (`localStorage`) e pode ser exportado/importado em JSON.
 
 ## Requisitos para rodar localmente
 
@@ -72,10 +72,18 @@ http://localhost:5173
 ## Como funciona
 
 - Participantes podem ser cadastrados individualmente ou em lote.
-- A primeira rodada é gerada automaticamente com o sistema suíço.
+- Ao iniciar, a ordem inicial é sorteada: o rating define a ordem e o sorteio desempata
+  jogadores com o mesmo rating ou sem rating. A primeira rodada é gerada automaticamente.
 - Byes são atribuídos automaticamente quando o número de participantes é ímpar.
-- A classificação considera pontos e desempates em cascata.
-- O usuário pode configurar a ordem dos critérios de desempate na tela inicial.
+- Só a rodada atual aceita resultados; rodadas anteriores ficam somente leitura.
+- **Reemparceirar**: na rodada 1 faz um novo sorteio; nas seguintes refaz o pareamento
+  quando algo mudou (ex.: um participante foi retirado). Os resultados da rodada são descartados.
+- **Manutenção**: renomear participantes e removê-los do torneio. O removido continua no
+  placar com a pontuação congelada e não é mais emparceirado; uma partida pendente dele na
+  rodada atual vira vitória por W.O. do adversário.
+- **Exportar/Importar**: o torneio pode ser salvo em um arquivo JSON e retomado depois
+  pelo botão "Importar torneio" na tela inicial.
+- A classificação considera pontos e desempates em cascata, na ordem configurada na tela inicial.
 
 ## Versionamento e releases
 

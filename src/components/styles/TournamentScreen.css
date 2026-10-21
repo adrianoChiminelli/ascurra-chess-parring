@@ -58,6 +58,7 @@
 
 .tab-rail {
   width: 232px;
+  min-height: 0;
   flex-shrink: 0;
   background-color: var(--color-board);
   background-image:
@@ -123,6 +124,24 @@
   margin-bottom: 1rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tab-rail-rounds {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.tab-rail-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .tab-rail-round-badge {
@@ -507,6 +526,17 @@
   border-radius: 999px;
 }
 
+.match-forfeit-tag {
+  background: var(--color-loss-soft);
+  color: var(--color-loss);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 /* Resultado como controle segmentado */
 .result-btns {
   display: inline-flex;
@@ -618,6 +648,8 @@
     width: auto;
     flex-direction: row;
     overflow-x: auto;
+    /* Reserva o espaço do rodapé fixo ao revelar o item ativo. */
+    scroll-padding-inline-end: 7rem;
     padding: 0.6rem;
     background-image: none;
   }
@@ -631,6 +663,60 @@
     padding: 0 0.4rem 0 0;
     border-bottom: none;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .tab-rail-rounds {
+    flex: none;
+    flex-direction: row;
+    overflow: visible;
+  }
+
+  /* Fixo à direita da barra horizontal, visível mesmo com muitas rodadas. */
+  .tab-rail-footer {
+    position: sticky;
+    right: -0.6rem;
+    flex-direction: row;
+    margin: -0.6rem -0.6rem -0.6rem auto;
+    padding: 0.6rem;
+    border-top: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--color-board);
+  }
+
+  .tab-rail-item-label {
+    display: none;
+  }
+
+  .standings-table.maintenance-table {
+    min-width: 0;
+  }
+
+  .maintenance-table .col-rating {
+    display: none;
+  }
+
+  .standings-table.maintenance-table th,
+  .standings-table.maintenance-table td {
+    padding: 0.6rem 0.35rem;
+  }
+
+  .standings-table.maintenance-table th:first-child,
+  .standings-table.maintenance-table td:first-child {
+    padding-left: 0.6rem;
+  }
+
+  .maintenance-table .status-tag {
+    font-size: 0.68rem;
+    padding: 0.1rem 0.4rem;
+    white-space: normal;
+  }
+
+  .maintenance-name-input {
+    min-width: 0;
+  }
+
+  .maintenance-action {
+    width: 28px;
   }
 
   .tab-rail-item.active::before {
@@ -656,4 +742,81 @@
   .result-btn {
     flex: 1;
   }
+}
+
+/* ---------- Manutenção ---------- */
+
+.maintenance-table {
+  min-width: 560px;
+}
+
+.maintenance-table tr.is-withdrawn td {
+  color: var(--color-muted);
+}
+
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-tag.is-active {
+  background: var(--color-win-soft);
+  color: var(--color-win);
+}
+
+.maintenance-actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.maintenance-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+}
+
+.maintenance-action:hover:not(:disabled) {
+  background: var(--color-surface-alt);
+  border-color: var(--color-border);
+  color: var(--color-ink);
+}
+
+.maintenance-action.is-danger:hover:not(:disabled) {
+  background: var(--color-loss-soft);
+  border-color: rgba(176, 68, 58, 0.35);
+  color: var(--color-loss);
+}
+
+.maintenance-action:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.maintenance-name-input {
+  width: 100%;
+  min-width: 8rem;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.88rem;
+}
+
+.maintenance-name-input[aria-invalid='true'] {
+  border-color: var(--color-loss);
+}
+
+.status-tag.is-withdrawn {
+  background: var(--color-loss-soft);
+  color: var(--color-loss);
 }

@@ -64,3 +64,13 @@ test('abre torneio salvo por versão anterior (ids no formato antigo)', async ({
   await expect(matchCards(page)).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Gerar rodada 2' })).toBeEnabled();
 });
+
+test('não apaga torneio salvo por uma versão mais nova do app', async ({ page }) => {
+  const future = JSON.stringify({ version: 99, state: { something: 'new' } });
+  await page.goto('./');
+  await page.evaluate((data) => localStorage.setItem('ascurra-chess:tournament', data), future);
+  await page.reload();
+
+  await expect(page.getByRole('heading', { name: 'Configure seu torneio' })).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('ascurra-chess:tournament'))).toBe(future);
+});

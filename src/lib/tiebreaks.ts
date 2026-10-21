@@ -3,7 +3,7 @@ import { buchholzCut1 } from '@echecs/buchholz/cut1';
 import { directEncounter } from '@echecs/direct-encounter';
 import { numberOfWins } from '@echecs/number-of-wins';
 import { sonnebornBerger } from '@echecs/sonneborn-berger';
-import type { CompletedRound } from '@echecs/swiss';
+import type { CompletedRound, Game } from '@echecs/swiss';
 
 import type { Participant, Round, TiebreakKind } from '../types';
 
@@ -23,11 +23,15 @@ export function toCompletedRounds(rounds: Round[]): CompletedRound[] {
         kind: 'pairing' as const,
         player: bye.player,
       })),
-      games: round.matches.map((match) => ({
-        white: match.white,
-        black: match.black,
-        result: match.result === 1 ? 'white' : match.result === 0 ? 'black' : 'draw',
-      })),
+      games: round.matches.map((match): Game => {
+        if (match.forfeit === 'black') return { white: match.white, black: match.black, result: 'white', forfeit: 'black' };
+        if (match.forfeit === 'white') return { white: match.white, black: match.black, result: 'black', forfeit: 'white' };
+        return {
+          white: match.white,
+          black: match.black,
+          result: match.result === 1 ? 'white' : match.result === 0 ? 'black' : 'draw',
+        };
+      }),
     }));
 }
 

@@ -4,6 +4,7 @@ import type {
   Match,
   MatchResult,
   Participant,
+  ParticipantDraft,
   Round,
   StandingRow,
   TournamentConfig,
@@ -18,25 +19,28 @@ import {
   toPlayersForTiebreak,
 } from './tiebreaks';
 import { createId } from './ids';
+import { drawStartingRanks, type RandomSource } from './startingRank';
+import { MAX_NAME_LENGTH } from './participants';
+
+/** Participantes que ainda podem ser emparceirados. */
+export function activeParticipants(participants: Participant[]): Participant[] {
+  return participants.filter((p) => p.withdrawnInRound === null);
+}
 
 /**
- * Converte os participantes para o formato que a lib de pareamento espera,
- * ordenados por rating (jogadores sem rating entram por último) — essa ordem
- * define a "número de emparceiramento" usada no sorteio da 1ª rodada.
+ * Converte os participantes ativos para o formato da lib de pareamento. O rank
+ * segue o número inicial, renumerado sem lacunas deixadas por retirados. A lib
+ * aceita histórico com jogadores fora da lista (retirados).
  */
 function toPairingPlayers(participants: Participant[]): Player[] {
-  const sorted = [...participants].sort((a, b) => {
-    if (a.rating === null && b.rating === null) return 0;
-    if (a.rating === null) return 1;
-    if (b.rating === null) return -1;
-    return b.rating - a.rating;
-  });
-  return sorted.map((p, index) => ({
-    id: p.id,
-    rating: p.rating ?? undefined,
-    points: 0,
-    rank: index + 1,
-  }));
+  return [...activeParticipants(participants)]
+    .sort((a, b) => a.startingRank - b.startingRank)
+    .map((p, index) => ({
+      id: p.id,
+      rating: p.rating ?? undefined,
+      points: 0,
+      rank: index + 1,
+    }));
 }
 
 function compareNames(a: StandingRow, b: StandingRow): number {
@@ -112,6 +116,9 @@ export function generateNextRound(
 ): Round {
   const players = toPairingPlayers(participants);
   const completedRounds = toCompletedRounds(rounds);
+  if (players.length < 2) {
+    return { number: completedRounds.length + 1, matches: [], byes: [], isInvalid: true };
+  }
   const result = pair(players, completedRounds);
 
   const matches: Match[] = result.games.map((g) => ({
@@ -161,9 +168,12 @@ export function computeStandings(state: TournamentState): StandingRow[] {
       const whiteRow = rows.get(match.white);
       const blackRow = rows.get(match.black);
 
+      // W.O. conta ponto e vitória/derrota, mas não é partida jogada.
+      const played = match.forfeit === undefined ? 1 : 0;
+
       if (whiteRow) {
         whiteRow.points += match.result;
-        whiteRow.played += 1;
+        whiteRow.played += played;
         if (match.result === 1) whiteRow.wins += 1;
         else if (match.result === 0.5) whiteRow.draws += 1;
         else whiteRow.losses += 1;
@@ -172,7 +182,7 @@ export function computeStandings(state: TournamentState): StandingRow[] {
       if (blackRow) {
         const blackResult: MatchResult = match.result === 1 ? 0 : match.result === 0 ? 1 : 0.5;
         blackRow.points += blackResult;
-        blackRow.played += 1;
+        blackRow.played += played;
         if (blackResult === 1) blackRow.wins += 1;
         else if (blackResult === 0.5) blackRow.draws += 1;
         else blackRow.losses += 1;
@@ -293,7 +303,7 @@ export function computeStandings(state: TournamentState): StandingRow[] {
 }
 
 export function canGenerateNextRound(state: TournamentState): boolean {
-  if (state.participants.length < 2) return false;
+  if (activeParticipants(state.participants).length < 2) return false;
   if (state.rounds.length >= state.config.totalRounds) return false;
   if (state.rounds.length === 0) return true;
   const lastRound = state.rounds[state.rounds.length - 1];
@@ -309,7 +319,12 @@ export function canEditRound(state: TournamentState, roundNumber: number): boole
   return lastRound !== undefined && lastRound.number === roundNumber;
 }
 
-export function createTournament(config: TournamentConfig, participants: Participant[]): TournamentState {
+export function createTournament(
+  config: TournamentConfig,
+  drafts: ParticipantDraft[],
+  random: RandomSource = Math.random,
+): TournamentState {
+  const participants: Participant[] = drawStartingRanks(drafts, random).map((p) => ({ ...p, withdrawnInRound: null }));
   return { config, participants, rounds: [generateNextRound(participants, [])] };
 }
 
@@ -324,12 +339,100 @@ export function setMatchResult(
   const rounds = state.rounds.map((round) =>
     round.number !== roundNumber
       ? round
-      : { ...round, matches: round.matches.map((m) => (m.id === matchId ? { ...m, result } : m)) },
+      : {
+          ...round,
+          // Resultado de W.O. é definido pela retirada e não pode ser alterado.
+          matches: round.matches.map((m) => (m.id === matchId && m.forfeit === undefined ? { ...m, result } : m)),
+        },
   );
   return { ...state, rounds };
+}
+
+/** Nome válido: sem espaços nas pontas, não vazio e dentro do limite. */
+export function normalizeParticipantName(name: string): string | null {
+  const trimmed = name.trim();
+  return trimmed && trimmed.length <= MAX_NAME_LENGTH ? trimmed : null;
+}
+
+export function renameParticipant(state: TournamentState, participantId: string, name: string): TournamentState {
+  const normalized = normalizeParticipantName(name);
+  if (normalized === null) return state;
+
+  return {
+    ...state,
+    participants: state.participants.map((p) => (p.id === participantId ? { ...p, name: normalized } : p)),
+  };
+}
+
+/** Partida sem resultado do participante na rodada atual, se houver. */
+export function pendingMatchOf(state: TournamentState, participantId: string): Match | undefined {
+  const lastRound = state.rounds[state.rounds.length - 1];
+  return lastRound?.matches.find(
+    (m) => m.result === null && (m.white === participantId || m.black === participantId),
+  );
+}
+
+/**
+ * Retira o participante do torneio: ele mantém os pontos e continua no placar,
+ * mas não é mais emparceirado. A partida pendente na rodada atual vira W.O.
+ * para o adversário; resultados já registrados e byes são preservados.
+ */
+export function withdrawParticipant(state: TournamentState, participantId: string): TournamentState {
+  const participant = state.participants.find((p) => p.id === participantId);
+  const lastRound = state.rounds[state.rounds.length - 1];
+  if (!participant || participant.withdrawnInRound !== null || !lastRound) return state;
+
+  const pending = pendingMatchOf(state, participantId);
+  const forfeited = (m: Match): Match =>
+    m.white === participantId ? { ...m, result: 0, forfeit: 'white' } : { ...m, result: 1, forfeit: 'black' };
+
+  return {
+    ...state,
+    participants: state.participants.map((p) =>
+      p.id === participantId ? { ...p, withdrawnInRound: lastRound.number } : p,
+    ),
+    rounds: state.rounds.map((round) =>
+      round !== lastRound || !pending
+        ? round
+        : { ...round, matches: round.matches.map((m) => (m.id === pending.id ? forfeited(m) : m)) },
+    ),
+  };
 }
 
 export function appendNextRound(state: TournamentState): TournamentState {
   if (!canGenerateNextRound(state)) return state;
   return { ...state, rounds: [...state.rounds, generateNextRound(state.participants, state.rounds)] };
+}
+
+function pairingSignature(round: Round): string {
+  const games = round.matches.map((m) => `${m.white}>${m.black}`).sort();
+  const byes = round.byes.map((b) => b.player).sort();
+  return `${games.join(',')}|${byes.join(',')}`;
+}
+
+/**
+ * Rodada 1: sempre (novo sorteio). Demais: só se o pareamento mudaria — o
+ * sistema suíço é determinístico, então refazer sem mudança (ex.: retirada)
+ * repetiria exatamente os mesmos pares.
+ */
+export function canRepairCurrentRound(state: TournamentState): boolean {
+  const lastRound = state.rounds[state.rounds.length - 1];
+  if (!lastRound || activeParticipants(state.participants).length < 2) return false;
+  if (lastRound.number === 1) return true;
+
+  const simulated = generateNextRound(state.participants, state.rounds.slice(0, -1));
+  return pairingSignature(simulated) !== pairingSignature(lastRound);
+}
+
+/** Desfaz a rodada atual (resultados e W.O. incluídos) e emparceira de novo. */
+export function repairCurrentRound(state: TournamentState, random: RandomSource = Math.random): TournamentState {
+  if (!canRepairCurrentRound(state)) return state;
+
+  const previousRounds = state.rounds.slice(0, -1);
+  const participants =
+    previousRounds.length === 0
+      ? drawStartingRanks(state.participants, random)
+      : state.participants;
+
+  return { ...state, participants, rounds: [...previousRounds, generateNextRound(participants, previousRounds)] };
 }

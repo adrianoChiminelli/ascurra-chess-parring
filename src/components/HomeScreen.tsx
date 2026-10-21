@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import {
+  FileUp,
   Minus,
   Plus,
   Trash2,
@@ -7,31 +8,52 @@ import {
   Users,
   Play
 } from 'lucide-react';
-import { DEFAULT_TIEBREAK_ORDER, type Participant, type TiebreakKind, type TournamentConfig } from '../types';
+import {
+  DEFAULT_TIEBREAK_ORDER,
+  type ParticipantDraft,
+  type TiebreakKind,
+  type TournamentConfig,
+  type TournamentState,
+} from '../types';
 import { createId } from '../lib/ids';
 import { MAX_NAME_LENGTH, parseBatchText } from '../lib/participants';
+import { FILE_ERROR_MESSAGES, MAX_FILE_SIZE, parseTournamentFile } from '../lib/tournamentFile';
 import { TiebreakPicker } from './TiebreakPicker';
 import './styles/HomeScreen.css';
 import knightImage from '../assets/knight.png';
 
 interface HomeScreenProps {
-  onStart: (config: TournamentConfig, participants: Participant[]) => void;
+  onStart: (config: TournamentConfig, participants: ParticipantDraft[]) => void;
+  onImport: (state: TournamentState) => void;
 }
 
 type EntryMode = 'individual' | 'batch';
 
-export function HomeScreen({ onStart }: HomeScreenProps) {
+export function HomeScreen({ onStart, onImport }: HomeScreenProps) {
   const [tournamentName, setTournamentName] = useState('');
   const [totalRounds, setTotalRounds] = useState(5);
   const [tiebreakOrder, setTiebreakOrder] = useState<TiebreakKind[]>(DEFAULT_TIEBREAK_ORDER);
   const [entryMode, setEntryMode] = useState<EntryMode>('individual');
-  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [participants, setParticipants] = useState<ParticipantDraft[]>([]);
 
   const [singleName, setSingleName] = useState('');
   const [singleRating, setSingleRating] = useState('');
   const [batchText, setBatchText] = useState('');
   const [batchError, setBatchError] = useState('');
   const [error, setError] = useState('');
+  const [importError, setImportError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleImportFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    // Permite selecionar o mesmo arquivo de novo depois de um erro.
+    event.target.value = '';
+    if (!file) return;
+
+    const result = file.size > MAX_FILE_SIZE ? ({ ok: false, error: 'too-large' } as const) : parseTournamentFile(await file.text());
+    if (result.ok) onImport(result.state);
+    else setImportError(FILE_ERROR_MESSAGES[result.error]);
+  }
 
   function addSingleParticipant() {
     const name = singleName.trim();
@@ -86,7 +108,29 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
           <small>Clube de Xadrez Ascurra</small>
           Ascurra Chess
         </div>
+        <div className="home-header-actions">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            hidden
+            data-testid="import-file-input"
+            onChange={handleImportFile}
+          />
+          <button type="button" className="secondary-btn" onClick={() => fileInputRef.current?.click()}>
+            <FileUp size={15} />
+            Importar torneio
+          </button>
+        </div>
       </header>
+      {importError && (
+        <div className="import-error" role="alert">
+          <span>{importError}</span>
+          <button type="button" className="import-error-close" aria-label="Fechar aviso" onClick={() => setImportError('')}>
+            ×
+          </button>
+        </div>
+      )}
 
       <main className="home-main">
         <div className="home-layout">

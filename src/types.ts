@@ -1,11 +1,22 @@
-export interface Participant {
+/** Dados informados no cadastro, antes do início do torneio. */
+export interface ParticipantDraft {
   id: string;
   name: string;
   rating: number | null;
 }
 
+export interface Participant extends ParticipantDraft {
+  /** Número inicial (1 = primeiro): rating decrescente, empates e sem rating pela ordem do sorteio. */
+  startingRank: number;
+  /** Rodada em que o participante foi retirado; null = ativo. Retirados não são mais emparceirados. */
+  withdrawnInRound: number | null;
+}
+
 /** Resultado de uma partida do ponto de vista do jogador das brancas. */
 export type MatchResult = 1 | 0.5 | 0;
+
+/** Lado que perdeu por W.O. (não compareceu). */
+export type ForfeitSide = 'white' | 'black';
 
 export type TiebreakKind =
   | 'buchholzCut1'
@@ -58,6 +69,8 @@ export interface Match {
   white: string; // participant id
   black: string; // participant id
   result: MatchResult | null; // null = ainda não jogado
+  /** Presente quando a partida foi decidida por W.O.; result é sempre a vitória do outro lado. */
+  forfeit?: ForfeitSide;
 }
 
 export interface RoundBye {

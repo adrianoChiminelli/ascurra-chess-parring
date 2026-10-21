@@ -4,16 +4,27 @@ import { DEFAULT_TIEBREAK_ORDER } from '../../src/types';
 import {
   appendNextRound,
   canEditRound,
+  canRepairCurrentRound,
   canGenerateNextRound,
   computeStandings,
   createTournament,
   generateNextRound,
   isRoundComplete,
+  pendingMatchOf,
+  renameParticipant,
+  repairCurrentRound,
   setMatchResult,
+  withdrawParticipant,
 } from '../../src/lib/tournament.ts';
+import { seededRandom } from './random.ts';
 
 function participant(id: string, name = id, rating: number | null = null): Participant {
-  return { id, name, rating };
+  return { id, name, rating, startingRank: 1, withdrawnInRound: null };
+}
+
+/** Atribui números iniciais na ordem recebida. */
+function ranked(list: Participant[]): Participant[] {
+  return list.map((p, index) => ({ ...p, startingRank: index + 1 }));
 }
 
 function match(white: string, black: string, result: MatchResult | null): Match {
@@ -41,7 +52,7 @@ function ranking(s: TournamentState): string[] {
  * a: 2 pts | b ("Zé") e c ("Ana"): 1 pt cada | d: 0 pts.
  * b venceu c no confronto direto e enfrentou adversários mais fortes (BH 3 x 1).
  */
-const players = [participant('a', 'Alfa'), participant('b', 'Zé'), participant('c', 'Ana'), participant('d', 'Delta')];
+const players = ranked([participant('a', 'Alfa'), participant('b', 'Zé'), participant('c', 'Ana'), participant('d', 'Delta')]);
 const rounds = [
   round(1, [match('a', 'b', 1), match('c', 'd', 1)]),
   round(2, [match('a', 'd', 1), match('b', 'c', 1)]),
@@ -98,21 +109,21 @@ describe('generateNextRound', () => {
   });
 
   it('atribui bye com número ímpar', () => {
-    const generated = generateNextRound([...players, participant('e')], []);
+    const generated = generateNextRound(ranked([...players, participant('e')]), []);
 
     expect(generated.matches).toHaveLength(2);
     expect(generated.byes).toHaveLength(1);
   });
 
   it('marca a rodada como inválida quando não há pareamento possível (número par)', () => {
-    const two = [participant('a'), participant('b')];
+    const two = ranked([participant('a'), participant('b')]);
     const generated = generateNextRound(two, [round(1, [match('a', 'b', 1)])]);
 
     expect(generated).toMatchObject({ number: 2, isInvalid: true, matches: [], byes: [] });
   });
 
   it('marca a rodada como inválida quando não há pareamento possível (número ímpar)', () => {
-    const three = [participant('a'), participant('b'), participant('c')];
+    const three = ranked([participant('a'), participant('b'), participant('c')]);
     const played = [
       round(1, [match('a', 'b', 0.5)], ['c']),
       round(2, [match('c', 'a', 0.5)], ['b']),
@@ -172,5 +183,190 @@ describe('regras de rodada', () => {
     const created = createTournament(state(players, []).config, players);
     expect(created.rounds).toHaveLength(1);
     expect(created.rounds[0].matches).toHaveLength(2);
+  });
+});
+
+describe('participantes retirados', () => {
+  const withdrawn = (list: Participant[], id: string, roundNumber: number) =>
+    list.map((p) => (p.id === id ? { ...p, withdrawnInRound: roundNumber } : p));
+
+  it('não são emparceirados nas rodadas seguintes', () => {
+    const list = withdrawn(ranked([...players, participant('e')]), 'e', 1);
+    const generated = generateNextRound(list, [round(1, [match('a', 'b', 1), match('c', 'd', 1)], ['e'])]);
+    const seated = [...generated.matches.flatMap((m) => [m.white, m.black]), ...generated.byes.map((b) => b.player)];
+
+    expect(seated.sort()).toEqual(['a', 'b', 'c', 'd']);
+    expect(generated.byes).toEqual([]);
+  });
+
+  it('continuam no placar com os pontos que tinham', () => {
+    const s = state(withdrawn(players, 'a', 2), rounds);
+    expect(computeStandings(s).find((row) => row.participant.id === 'a')?.points).toBe(2);
+  });
+
+  it('com menos de 2 ativos, não há próxima rodada', () => {
+    const s = state(withdrawn(withdrawn(withdrawn(players, 'a', 2), 'b', 2), 'c', 2), rounds);
+    expect(canGenerateNextRound(s)).toBe(false);
+    expect(generateNextRound(s.participants, s.rounds).isInvalid).toBe(true);
+  });
+});
+
+describe('W.O.', () => {
+  const forfeitRound = round(1, [{ id: 'wo', white: 'a', black: 'b', result: 1, forfeit: 'black' }, match('c', 'd', 0.5)]);
+
+  it('conta ponto e vitória/derrota, mas não como partida jogada', () => {
+    const byId = new Map(computeStandings(state(players, [forfeitRound])).map((row) => [row.participant.id, row]));
+
+    expect(byId.get('a')).toMatchObject({ points: 1, wins: 1, played: 0 });
+    expect(byId.get('b')).toMatchObject({ points: 0, losses: 1, played: 0 });
+    expect(byId.get('c')).toMatchObject({ points: 0.5, draws: 1, played: 1 });
+  });
+
+  it('é aceito no histórico de pareamento', () => {
+    const generated = generateNextRound(players, [forfeitRound]);
+    expect(generated.isInvalid).toBe(false);
+    expect(generated.matches).toHaveLength(2);
+  });
+});
+
+describe('createTournament', () => {
+  const drafts = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => ({ id, name: id, rating: null }));
+  const config = state(players, []).config;
+
+  it('sorteia números iniciais e marca todos como ativos', () => {
+    const created = createTournament(config, drafts, seededRandom(3));
+
+    expect(created.participants.map((p) => p.startingRank).sort()).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(created.participants.every((p) => p.withdrawnInRound === null)).toBe(true);
+  });
+
+  it('é reprodutível com a mesma fonte aleatória e varia entre fontes', () => {
+    const pairsOf = (seed: number) =>
+      createTournament(config, drafts, seededRandom(seed)).rounds[0].matches.map((m) => `${m.white}-${m.black}`).join();
+
+    expect(pairsOf(11)).toBe(pairsOf(11));
+    expect(new Set([1, 2, 3, 4, 5, 6, 7, 8].map(pairsOf)).size).toBeGreaterThan(1);
+  });
+});
+
+describe('renameParticipant', () => {
+  const s0 = state(players, rounds);
+
+  it('renomeia removendo espaços nas pontas', () => {
+    const renamed = renameParticipant(s0, 'a', '  Alfa Romeo  ');
+    expect(renamed.participants.find((p) => p.id === 'a')?.name).toBe('Alfa Romeo');
+  });
+
+  it.each([['vazio', '   '], ['acima do limite', 'x'.repeat(21)]])('ignora nome inválido: %s', (_, name) => {
+    expect(renameParticipant(s0, 'a', name)).toBe(s0);
+  });
+});
+
+describe('withdrawParticipant', () => {
+  const ongoing = () => state(players, [...rounds, round(3, [match('a', 'c', null), match('b', 'd', 1)])]);
+  const byId = (s: TournamentState, id: string) => s.participants.find((p) => p.id === id)!;
+
+  it('marca a rodada da retirada', () => {
+    expect(byId(withdrawParticipant(ongoing(), 'a'), 'a').withdrawnInRound).toBe(3);
+  });
+
+  it('partida pendente vira W.O. para o adversário (retirado de brancas)', () => {
+    const match3 = withdrawParticipant(ongoing(), 'a').rounds[2].matches[0];
+    expect(match3).toMatchObject({ result: 0, forfeit: 'white' });
+  });
+
+  it('partida pendente vira W.O. para o adversário (retirado de pretas)', () => {
+    const match3 = withdrawParticipant(ongoing(), 'c').rounds[2].matches[0];
+    expect(match3).toMatchObject({ result: 1, forfeit: 'black' });
+  });
+
+  it('preserva partida já decidida', () => {
+    const s = withdrawParticipant(ongoing(), 'd');
+    expect(s.rounds[2].matches[1]).toEqual(match('b', 'd', 1));
+    expect(pendingMatchOf(s, 'd')).toBeUndefined();
+  });
+
+  it('congela a pontuação no placar', () => {
+    const s = withdrawParticipant(ongoing(), 'a');
+    const row = computeStandings(s).find((r) => r.participant.id === 'a')!;
+    // 2 pontos das rodadas 1 e 2; derrota por W.O. na rodada 3.
+    expect(row).toMatchObject({ points: 2, losses: 1, played: 2 });
+  });
+
+  it('libera a próxima rodada sem o retirado', () => {
+    const six = ranked(['a', 'b', 'c', 'd', 'e', 'f'].map((id) => participant(id)));
+    const firstRound = round(1, [match('a', 'b', null), match('c', 'd', 1), match('e', 'f', 1)]);
+    const s = withdrawParticipant(state(six, [firstRound]), 'a');
+    expect(canGenerateNextRound(s)).toBe(true);
+
+    const next = appendNextRound(s).rounds[1];
+    const seated = [...next.matches.flatMap((m) => [m.white, m.black]), ...next.byes.map((b) => b.player)];
+    expect(next.isInvalid).toBe(false);
+    expect(seated.sort()).toEqual(['b', 'c', 'd', 'e', 'f']);
+    expect(next.byes).toHaveLength(1);
+  });
+
+  it('não altera um participante já retirado', () => {
+    const once = withdrawParticipant(ongoing(), 'a');
+    expect(withdrawParticipant(once, 'a')).toBe(once);
+  });
+
+  it('resultado de W.O. não pode ser editado', () => {
+    const s = withdrawParticipant(ongoing(), 'a');
+    expect(setMatchResult(s, 3, 'a-c', 0.5).rounds[2].matches[0]).toMatchObject({ result: 0, forfeit: 'white' });
+  });
+});
+
+describe('reemparceirar a rodada atual', () => {
+  const pairsOf = (r: Round) => r.matches.map((m) => `${m.white}-${m.black}`).join();
+  const unrated = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((id) => ({ id, name: id, rating: null }));
+  const config = state(players, []).config;
+
+  it('rodada 1: novo sorteio dos números iniciais e novo pareamento', () => {
+    const created = createTournament(config, unrated, seededRandom(1));
+    const repaired = repairCurrentRound(created, seededRandom(2));
+
+    expect(canRepairCurrentRound(created)).toBe(true);
+    expect(repaired.rounds).toHaveLength(1);
+    expect(repaired.participants.map((p) => p.startingRank).sort()).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(pairsOf(repaired.rounds[0])).not.toBe(pairsOf(created.rounds[0]));
+  });
+
+  it('descarta os resultados da rodada atual', () => {
+    const created = createTournament(config, unrated, seededRandom(1));
+    const withResult = setMatchResult(created, 1, created.rounds[0].matches[0].id, 1);
+    const repaired = repairCurrentRound(withResult, seededRandom(2));
+
+    expect(repaired.rounds[0].matches.every((m) => m.result === null)).toBe(true);
+  });
+
+  it('rodada 2 sem mudança: indisponível, pois repetiria os mesmos pares', () => {
+    const six = ranked(['a', 'b', 'c', 'd', 'e', 'f'].map((id) => participant(id)));
+    const s = appendNextRound(state(six, [round(1, [match('a', 'd', 1), match('b', 'e', 1), match('c', 'f', 1)])]));
+
+    expect(canRepairCurrentRound(s)).toBe(false);
+    expect(repairCurrentRound(s)).toBe(s);
+  });
+
+  it('rodada 2 após retirada: refaz sem o retirado, sem W.O. e mantendo a rodada 1', () => {
+    const six = ranked(['a', 'b', 'c', 'd', 'e', 'f'].map((id) => participant(id)));
+    const first = round(1, [match('a', 'd', 1), match('b', 'e', 1), match('c', 'f', 1)]);
+    const s = withdrawParticipant(appendNextRound(state(six, [first])), 'a');
+
+    expect(canRepairCurrentRound(s)).toBe(true);
+    const repaired = repairCurrentRound(s);
+    const second = repaired.rounds[1];
+    const seated = [...second.matches.flatMap((m) => [m.white, m.black]), ...second.byes.map((b) => b.player)];
+
+    expect(repaired.rounds[0]).toBe(s.rounds[0]);
+    expect(repaired.participants).toBe(s.participants);
+    expect(seated.sort()).toEqual(['b', 'c', 'd', 'e', 'f']);
+    expect(second.matches.some((m) => m.forfeit !== undefined)).toBe(false);
+  });
+
+  it('indisponível com menos de 2 ativos', () => {
+    const two = ranked([participant('a'), participant('b')]);
+    const s = withdrawParticipant(state(two, [round(1, [match('a', 'b', null)])]), 'a');
+    expect(canRepairCurrentRound(s)).toBe(false);
   });
 });

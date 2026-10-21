@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+### Added
+
+- Botões "Exportar" e "Manutenção" no rodapé da barra lateral; no mobile ficam fixos à direita da barra horizontal.
+- Aba de manutenção com a lista de participantes: número inicial, rating, pontuação atual e status.
+- Renomear participantes na manutenção; o novo nome vale para rodadas e placar.
+- Remover participante do torneio: a partida pendente na rodada atual vira vitória por W.O. do adversário; o retirado continua no placar com a pontuação congelada (badge "Retirado") e não é mais emparceirado.
+- Partidas decididas por W.O. aparecem marcadas na rodada e com o resultado travado.
+- Botão "Reemparceirar" na rodada atual: na rodada 1 faz um novo sorteio da ordem inicial; nas demais refaz o pareamento quando algo mudou (ex.: retirada), já que sem mudança os pares seriam os mesmos. Resultados da rodada são descartados, com confirmação.
+- Botão "Importar torneio" na tela inicial: continua um torneio a partir de um arquivo JSON exportado, com validação e mensagens de erro específicas.
+- Sorteio da ordem inicial dos participantes ao iniciar o torneio; o sorteio desempata jogadores com o mesmo rating e sem rating (critério FIDE).
+
+### Changed
+
+- Tela do torneio ocupa a altura da janela: cabeçalho e barra lateral fixos, só o conteúdo rola; cada aba abre no topo e a rodada ativa fica sempre visível na barra.
+- Formato salvo passa para a versão 2, com migração automática de torneios da versão 1 (pareamentos em andamento preservados).
+- Validação de integridade do torneio salvo (referências, sequência de rodadas e unicidade).
+
+### Fixed
+
+- Torneio salvo por uma versão mais nova do app não é mais apagado ao abrir.
+
 ## [1.2.0] - 2026-10-21
 
 ### Fixed
