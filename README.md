@@ -47,6 +47,22 @@ Verifique o código com lint:
 npm run lint
 ```
 
+Rode os testes (ou `npm run test:watch` durante o desenvolvimento):
+
+```bash
+npm test
+```
+
+Rode os testes E2E no navegador (Playwright). Na primeira vez, instale o Chromium:
+
+```bash
+npx playwright install chromium
+npm run test:e2e      # headless
+npm run test:e2e:ui   # modo interativo, com navegador visível e passo a passo
+```
+
+O relatório da última execução fica em `playwright-report/` (`npx playwright show-report`).
+
 A aplicação normalmente ficará disponível em:
 
 ```text

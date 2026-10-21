@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type Dispatch } from 'react';
 import { Check, ListOrdered, Plus, Swords } from 'lucide-react';
-import type { Match, TournamentState } from '../types';
+import type { TournamentState } from '../types';
 import {
+  canEditRound,
   canGenerateNextRound,
   computeStandings,
-  generateNextRound,
   isRoundComplete,
 } from '../lib/tournament.ts';
+import type { TournamentAction } from '../lib/tournamentReducer.ts';
 import { StandingsPanel } from './StandingsPanel';
 import { RoundPanel } from './RoundPanel';
 import './styles/TournamentScreen.css';
@@ -14,17 +15,12 @@ import knightImage from '../assets/knight.png';
 
 interface TournamentScreenProps {
   state: TournamentState;
-  onChange: (state: TournamentState) => void;
-  onNewTournament: () => void;
+  dispatch: Dispatch<TournamentAction>;
 }
 
 type TabKey = 'standings' | `round-${number}`;
 
-export function TournamentScreen({
-  state,
-  onChange,
-  onNewTournament,
-}: TournamentScreenProps) {
+export function TournamentScreen({ state, dispatch }: TournamentScreenProps) {
   const [activeTab, setActiveTab] = useState<TabKey>(
     state.rounds.length > 0 ? `round-${state.rounds.length}` : 'standings',
   );
@@ -40,28 +36,9 @@ export function TournamentScreen({
     [standings],
   );
 
-  function setMatchResult(
-    roundNumber: number,
-    matchId: string,
-    result: Match['result'],
-  ) {
-    const rounds = state.rounds.map((round) => {
-      if (round.number !== roundNumber) return round;
-      return {
-        ...round,
-        matches: round.matches.map((m) =>
-          m.id === matchId ? { ...m, result } : m,
-        ),
-      };
-    });
-    onChange({ ...state, rounds });
-  }
-
   function handleGenerateNext() {
-    const newRound = generateNextRound(state.participants, state.rounds);
-    const rounds = [...state.rounds, newRound];
-    onChange({ ...state, rounds });
-    setActiveTab(`round-${newRound.number}`);
+    dispatch({ type: 'generateNextRound' });
+    setActiveTab(`round-${state.rounds.length + 1}`);
   }
 
   const canGenerateNext = canGenerateNextRound(state);
@@ -97,7 +74,7 @@ export function TournamentScreen({
               className="secondary-btn"
               onClick={() => {
                 if (window.confirm('Iniciar um novo torneio? O torneio atual será perdido.')) {
-                  onNewTournament();
+                  dispatch({ type: 'reset' });
                 }
               }}
             >
@@ -154,8 +131,7 @@ export function TournamentScreen({
               const roundNumber = Number(activeTab.replace('round-', ''));
               const round = state.rounds.find((r) => r.number === roundNumber);
               if (!round) return null;
-              const isCurrentRound =
-                roundNumber === state.rounds[state.rounds.length - 1].number;
+              const isCurrentRound = canEditRound(state, roundNumber);
               return (
                 <RoundPanel
                   round={round}
@@ -163,7 +139,7 @@ export function TournamentScreen({
                   participantsById={participantsById}
                   pointsById={pointsById}
                   onSetResult={(matchId, result) =>
-                    setMatchResult(roundNumber, matchId, result)
+                    dispatch({ type: 'setResult', roundNumber, matchId, result })
                   }
                   isCurrentRound={isCurrentRound}
                   canGenerateNext={isCurrentRound && canGenerateNext}

@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Rodada sem pareamento possível com número par de jogadores era criada vazia e tratada como concluída.
+- Rodada sem pareamento possível aparecia como concluída e entrava no cálculo de desempates como rodada disputada.
+- Nomes acima de 20 caracteres na entrada em lote eram truncados sem aviso; agora a linha é rejeitada e mantida no campo.
+
+### Changed
+
+- Resultados de rodadas anteriores ficam somente leitura depois que a rodada seguinte é gerada.
+- Estado do torneio gerenciado por reducer de domínio (`tournamentReducer`), separado da UI.
+- Ids gerados com `crypto.randomUUID()`.
+- Build passa a rodar typecheck (`tsc -b`); CI com lint, typecheck, testes e build em push e PR.
+
+### Added
+
+- Testes unitários (Vitest) para classificação, desempates, pareamento, reducer e entrada em lote.
+- Testes E2E (Playwright) cobrindo cadastro, fluxo de rodadas, rodadas somente leitura, rodada inválida, placar, tooltip e persistência; executados no CI.
+
 ## [1.1.1] - 2026-10-18
 
 ### Fix

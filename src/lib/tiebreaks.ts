@@ -17,7 +17,7 @@ export type TiebreakPlayer = {
 
 export function toCompletedRounds(rounds: Round[]): CompletedRound[] {
   return rounds
-    .filter((round) => round.matches.every((match) => match.result !== null))
+    .filter((round) => !round.isInvalid && round.matches.every((match) => match.result !== null))
     .map((round) => ({
       byes: round.byes.map((bye) => ({
         kind: 'pairing' as const,

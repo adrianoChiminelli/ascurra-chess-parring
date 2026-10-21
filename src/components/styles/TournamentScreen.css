@@ -532,9 +532,17 @@
   white-space: nowrap;
 }
 
-.result-btn:hover {
+.result-btn:hover:not(:disabled) {
   background: var(--color-surface);
   color: var(--color-ink);
+}
+
+.result-btn:disabled {
+  cursor: default;
+}
+
+.result-btn:disabled:not(.selected-win, .selected-draw, .selected-loss) {
+  opacity: 0.45;
 }
 
 .result-btn.selected-win {

@@ -8,7 +8,8 @@ import {
   Play
 } from 'lucide-react';
 import { DEFAULT_TIEBREAK_ORDER, type Participant, type TiebreakKind, type TournamentConfig } from '../types';
-import { nextId } from '../lib/ids';
+import { createId } from '../lib/ids';
+import { MAX_NAME_LENGTH, parseBatchText } from '../lib/participants';
 import { TiebreakPicker } from './TiebreakPicker';
 import './styles/HomeScreen.css';
 import knightImage from '../assets/knight.png';
@@ -18,18 +19,6 @@ interface HomeScreenProps {
 }
 
 type EntryMode = 'individual' | 'batch';
-
-function parseBatchLine(line: string): { name: string; rating: number | null } | null {
-  const trimmed = line.trim();
-  if (!trimmed) return null;
-  // Aceita "Nome, 1800" ou "Nome; 1800" ou apenas "Nome"
-  const match = trimmed.match(/^(.*?)[,;]\s*(\d{2,4})\s*$/);
-  const subStringFunction = (str: string) => str.trim().substring(0, 20);
-  if (match) {
-    return { name: subStringFunction(match[1]), rating: Number(match[2].substring(0, 4)) };
-  }
-  return { name: subStringFunction(trimmed), rating: null };
-}
 
 export function HomeScreen({ onStart }: HomeScreenProps) {
   const [tournamentName, setTournamentName] = useState('');
@@ -41,28 +30,30 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
   const [singleName, setSingleName] = useState('');
   const [singleRating, setSingleRating] = useState('');
   const [batchText, setBatchText] = useState('');
+  const [batchError, setBatchError] = useState('');
   const [error, setError] = useState('');
 
   function addSingleParticipant() {
     const name = singleName.trim();
     if (!name) return;
     const rating = singleRating.trim() ? Number(singleRating) : null;
-    setParticipants((prev) => [...prev, { id: nextId('p'), name, rating }]);
+    setParticipants((prev) => [...prev, { id: createId(), name, rating }]);
     setSingleName('');
     setSingleRating('');
   }
 
   function addBatchParticipants() {
-    const lines = batchText.split('\n').map(parseBatchLine).filter(Boolean) as {
-      name: string;
-      rating: number | null;
-    }[];
-    if (lines.length === 0) return;
-    setParticipants((prev) => [
-      ...prev,
-      ...lines.map((l) => ({ id: nextId('p'), name: l.name, rating: l.rating })),
-    ]);
-    setBatchText('');
+    const { entries, rejected } = parseBatchText(batchText);
+    if (entries.length > 0) {
+      setParticipants((prev) => [...prev, ...entries.map((entry) => ({ id: createId(), ...entry }))]);
+    }
+    // Linhas rejeitadas ficam no campo para o usuário corrigir.
+    setBatchText(rejected.join('\n'));
+    setBatchError(
+      rejected.length > 0
+        ? `${rejected.length} linha${rejected.length === 1 ? '' : 's'} não adicionada${rejected.length === 1 ? '' : 's'}: o nome deve ter até ${MAX_NAME_LENGTH} caracteres.`
+        : '',
+    );
   }
 
   function removeParticipant(id: string) {
@@ -170,7 +161,7 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
                   <input
                     className="text-input"
                     placeholder="Nome do participante"
-                    maxLength={20}
+                    maxLength={MAX_NAME_LENGTH}
                     value={singleName}
                     onChange={(e) => setSingleName(e.target.value)}
                     onKeyDown={(e) => {
@@ -209,8 +200,9 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
                     onChange={(e) => setBatchText(e.target.value)}
                   />
                   <p className="field-hint">
-                    Um nome por linha. O rating é opcional — adicione ", 1800" após o nome se quiser informá-lo.
+                    Um nome por linha, com até {MAX_NAME_LENGTH} caracteres. O rating é opcional — adicione ", 1800" após o nome se quiser informá-lo.
                   </p>
+                  {batchError && <p className="form-error">{batchError}</p>}
                   <button
                     type="button"
                     className="secondary-btn"

@@ -1,33 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 import { HomeScreen } from './components/HomeScreen';
 import { TournamentScreen } from './components/TournamentScreen';
 import { clearTournament, loadTournament, saveTournament } from './lib/storage.ts';
-import { generateNextRound } from './lib/tournament.ts';
-import { type Participant, type TournamentConfig, type TournamentState } from './types';
+import { tournamentReducer } from './lib/tournamentReducer.ts';
 
 export default function App() {
-  const [tournament, setTournament] = useState<TournamentState | null>(loadTournament);
+  const [tournament, dispatch] = useReducer(tournamentReducer, null, loadTournament);
 
   useEffect(() => {
     if (tournament) saveTournament(tournament);
     else clearTournament();
   }, [tournament]);
 
-  function handleStart(config: TournamentConfig, participants: Participant[]) {
-    const firstRound = generateNextRound(participants, []);
-    setTournament({ config, participants, rounds: [firstRound] });
-  }
-
   return (
     <div className="app-shell">
       {tournament ? (
-        <TournamentScreen
-          state={tournament}
-          onChange={setTournament}
-          onNewTournament={() => setTournament(null)}
-        />
+        <TournamentScreen state={tournament} dispatch={dispatch} />
       ) : (
-        <HomeScreen onStart={handleStart} />
+        <HomeScreen onStart={(config, participants) => dispatch({ type: 'start', config, participants })} />
       )}
     </div>
   );

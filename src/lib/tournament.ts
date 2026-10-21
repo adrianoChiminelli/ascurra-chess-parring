@@ -6,6 +6,7 @@ import type {
   Participant,
   Round,
   StandingRow,
+  TournamentConfig,
   TournamentState,
   TiebreakKind,
 } from '../types';
@@ -16,7 +17,7 @@ import {
   toCompletedRounds,
   toPlayersForTiebreak,
 } from './tiebreaks';
-import { nextId } from './ids';
+import { createId } from './ids';
 
 /**
  * Converte os participantes para o formato que a lib de pareamento espera,
@@ -93,9 +94,12 @@ function badDirectEncounterGroup(
   return false;
 }
 
-/** Considera uma rodada concluída quando todas as suas partidas têm resultado. */
+/**
+ * Considera uma rodada concluída quando todas as suas partidas têm resultado.
+ * Rodada inválida (sem pareamento possível) nunca é concluída: não foi disputada.
+ */
 export function isRoundComplete(round: Round): boolean {
-  return round.matches.every((m) => m.result !== null);
+  return !round.isInvalid && round.matches.every((m) => m.result !== null);
 }
 
 /**
@@ -111,19 +115,20 @@ export function generateNextRound(
   const result = pair(players, completedRounds);
 
   const matches: Match[] = result.games.map((g) => ({
-    id: nextId('m'),
+    id: createId(),
     white: g.white,
     black: g.black,
     result: null,
   }));
 
   const byes = result.byes.map((b) => ({
-    id: nextId('b'),
+    id: createId(),
     player: b.player,
   }));
 
-  const noValidMatch = matches.length === 0 && byes.length === 1;
-  if (noValidMatch) {
+  // Sem nenhuma partida possível (todos já se enfrentaram), o pair() devolve
+  // games vazio — com ou sem bye, dependendo da paridade de jogadores.
+  if (matches.length === 0) {
     return { number: completedRounds.length + 1, matches: [], byes: [], isInvalid: true };
   }
 
@@ -293,4 +298,38 @@ export function canGenerateNextRound(state: TournamentState): boolean {
   if (state.rounds.length === 0) return true;
   const lastRound = state.rounds[state.rounds.length - 1];
   return isRoundComplete(lastRound);
+}
+
+/**
+ * Só a última rodada aceita resultados: as anteriores já serviram de base
+ * para pareamentos seguintes, e alterá-las deixaria o torneio inconsistente.
+ */
+export function canEditRound(state: TournamentState, roundNumber: number): boolean {
+  const lastRound = state.rounds[state.rounds.length - 1];
+  return lastRound !== undefined && lastRound.number === roundNumber;
+}
+
+export function createTournament(config: TournamentConfig, participants: Participant[]): TournamentState {
+  return { config, participants, rounds: [generateNextRound(participants, [])] };
+}
+
+export function setMatchResult(
+  state: TournamentState,
+  roundNumber: number,
+  matchId: string,
+  result: MatchResult | null,
+): TournamentState {
+  if (!canEditRound(state, roundNumber)) return state;
+
+  const rounds = state.rounds.map((round) =>
+    round.number !== roundNumber
+      ? round
+      : { ...round, matches: round.matches.map((m) => (m.id === matchId ? { ...m, result } : m)) },
+  );
+  return { ...state, rounds };
+}
+
+export function appendNextRound(state: TournamentState): TournamentState {
+  if (!canGenerateNextRound(state)) return state;
+  return { ...state, rounds: [...state.rounds, generateNextRound(state.participants, state.rounds)] };
 }

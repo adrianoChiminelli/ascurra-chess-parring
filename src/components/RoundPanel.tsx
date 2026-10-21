@@ -32,6 +32,7 @@ export function RoundPanel({
   onGenerateNext,
 }: RoundPanelProps) {
   const isFinalRound = round.number >= totalRounds;
+  const isReadOnly = !isCurrentRound;
   const isInvalidRound = round.isInvalid;
 
   const roundFooter = () => {
@@ -80,6 +81,7 @@ export function RoundPanel({
             {round.matches.length} partida{round.matches.length === 1 ? '' : 's'}
             {round.byes.length > 0 &&
               ` · ${round.byes.length} bye${round.byes.length === 1 ? '' : 's'}`}
+            {isReadOnly && ' · somente leitura'}
           </p>
         </div>
       </div>
@@ -155,6 +157,7 @@ export function RoundPanel({
               <div className="result-btns">
                 <button
                   type="button"
+                  disabled={isReadOnly}
                   className={`result-btn ${whiteWon ? 'selected-win' : ''}`}
                   onClick={() => onSetResult(match.id, 1)}
                 >
@@ -162,6 +165,7 @@ export function RoundPanel({
                 </button>
                 <button
                   type="button"
+                  disabled={isReadOnly}
                   className={`result-btn ${draw ? 'selected-draw' : ''}`}
                   onClick={() => onSetResult(match.id, 0.5)}
                 >
@@ -169,6 +173,7 @@ export function RoundPanel({
                 </button>
                 <button
                   type="button"
+                  disabled={isReadOnly}
                   className={`result-btn ${blackWon ? 'selected-win' : ''}`}
                   onClick={() => onSetResult(match.id, 0)}
                 >
